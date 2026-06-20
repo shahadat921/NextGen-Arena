@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>NextGen Arena</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
+<style>
+:root{
+  --bg:#080C18;--card:#0F1628;--card2:#161D2F;--border:#1E2A40;
+  --cyan:#00D4FF;--purple:#7C3AED;--red:#EF4444;--gold:#F59E0B;
+  --green:#22C55E;--text:#E2E8F0;--muted:#64748B;--sub:#94A3B8;
+  --nav-h:62px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;overflow-x:hidden;}
+::-webkit-scrollbar{width:0;height:0;}
+button{cursor:pointer;border:none;background:none;color:inherit;}
+input,select,textarea{font-family:inherit;}
+
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.7);}70%{box-shadow:0 0 0 7px rgba(239,68,68,0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideUp{from{opacity:0;transform:translateY(100%);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideRight{from{opacity:0;transform:translateX(100%);}to{opacity:1;transform:translateX(0);}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 rgba(0,212,255,0);}50%{box-shadow:0 0 14px rgba(0,212,255,.35);}}
+@keyframes tickerScroll{from{transform:translateX(100%);}to{transform:translateX(-100%);}}
+@keyframes scanLine{0%{top:-5%;}100%{top:105%;}}
+
+/* SCREENS */
+.screen{display:none;min-height:100vh;animation:fadeUp .25s ease;}
+.screen.active{display:block;}
+#playerScreen.active{display:flex;flex-direction:column;min-height:100vh;}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:80;background:rgba(8,12,24,.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:18px 16px;display:flex;align-items:center;justify-content:space-between;min-height:68px;}
+.hdr-logo{display:flex;align-items:center;cursor:pointer;}
+.hdr-actions{display:flex;align-items:center;gap:6px;}
+.hdr-btn{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;background:var(--card);border:1px solid var(--border);position:relative;transition:background .15s;}
+.hdr-btn:active{background:var(--card2);}
+.badge{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;padding:0 3px;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
+
+/* TICKER */
+.ticker{background:linear-gradient(90deg,rgba(0,212,255,.07),rgba(124,58,237,.07));border-bottom:1px solid var(--border);padding:6px 0;overflow:hidden;white-space:nowrap;}
+.ticker-inner{display:inline-block;animation:tickerScroll 38s linear infinite;}
+.ticker-item{display:inline-block;padding:0 26px;font-size:11px;color:var(--sub);}
+.ticker-item b{color:var(--cyan);}
+
+/* BANNER */
+.banner{margin:10px 14px;border-radius:12px;background:linear-gradient(90deg,var(--card),var(--card2));border:1px solid rgba(0,212,255,.18);padding:9px 14px;font-size:12px;color:var(--sub);display:flex;align-items:center;gap:8px;}
+.banner .lnk{color:var(--cyan);font-weight:600;}
+
+/* SEARCH */
+.search-wrap{padding:8px 14px;background:rgba(8,12,24,.97);}
+.search-wrap input{width:100%;background:var(--card);border:1.5px solid rgba(0,212,255,.25);border-radius:12px;padding:10px 14px 10px 38px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center;}
+.search-wrap input:focus{border-color:var(--cyan);}
+
+/* SPORT TABS */
+.sport-tabs{display:flex;gap:9px;overflow-x:auto;padding:12px 14px 6px;}
+.s-tab{flex:0 0 auto;background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:9px 11px;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px;transition:all .2s;}
+.s-tab.on{background:rgba(0,212,255,.07);border-color:var(--cyan);animation:glow 2.5s ease-in-out infinite;}
+.s-tab .ico{font-size:22px;}
+.s-tab .lbl{font-size:10px;color:var(--muted);font-weight:600;}
+.s-tab.on .lbl{color:var(--cyan);}
+.s-tab .cnt{font-size:9px;font-weight:800;color:#fff;background:var(--red);border-radius:10px;padding:1px 5px;}
+.s-tab.on .cnt{background:var(--cyan);color:var(--bg);}
+
+/* PILLS */
+.pills{display:flex;gap:7px;padding:8px 14px 12px;overflow-x:auto;}
+.pill{flex:0 0 auto;border-radius:20px;padding:7px 13px;font-size:12px;font-weight:700;transition:all .2s;border:1.5px solid var(--border);background:var(--card);color:var(--sub);}
+.pill.on{background:var(--cyan);color:var(--bg);border-color:var(--cyan);}
+
+/* SECTION LABEL */
+.sec-lbl{padding:4px 14px 8px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;display:flex;align-items:center;gap:8px;}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* MATCH CARD */
+.m-card{margin:0 14px 11px;background:linear-gradient(145deg,var(--card) 0%,var(--card2) 100%);border:1.5px solid var(--border);border-radius:17px;overflow:hidden;cursor:pointer;transition:transform .13s;}
+.m-card:active{transform:scale(.978);}
+.m-card.live{border-color:rgba(0,212,255,.45);box-shadow:0 0 22px rgba(0,212,255,.09);}
+.m-card.hot-card{border-color:rgba(245,158,11,.3);}
+.m-league{display:flex;align-items:center;gap:7px;padding:8px 14px;background:rgba(255,255,255,.025);border-bottom:1px solid rgba(255,255,255,.05);}
+.m-league-name{font-size:11px;color:var(--sub);font-weight:700;letter-spacing:.7px;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.hot-b{background:linear-gradient(90deg,#ff6b35,#ef4444);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.m-body{padding:13px 14px 0;}
+.teams{display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.team-a,.team-b{display:flex;align-items:center;gap:9px;flex:1;}
+.team-b{flex-direction:row-reverse;}
+.flag{font-size:28px;flex-shrink:0;}
+.t-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.2;}
+.t-score{font-size:12px;font-weight:700;color:var(--cyan);margin-top:1px;}
+.team-b .t-name,.team-b .t-score{text-align:right;}
+.m-mid{text-align:center;min-width:88px;flex-shrink:0;}
+.live-row{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:3px;}
+.l-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse-dot 1.3s ease-in-out infinite;flex-shrink:0;}
+.l-txt{color:var(--red);font-size:11px;font-weight:800;letter-spacing:1px;}
+.m-time{color:var(--cyan);font-size:15px;font-weight:800;}
+.m-date{color:var(--muted);font-size:11px;}
+.m-over{color:var(--muted);font-size:11px;margin-top:1px;}
+.ended-score{color:var(--text);font-size:19px;font-weight:800;}
+.m-footer{margin-top:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.05);text-align:center;font-size:12px;color:var(--muted);font-weight:500;}
+.watch-bar{padding:8px;background:linear-gradient(90deg,rgba(0,212,255,.06),rgba(124,58,237,.06));border-top:1px solid rgba(0,212,255,.1);display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:.4px;}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:var(--nav-h);background:rgba(8,12,24,.97);backdrop-filter:blur(14px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;padding:6px 0 10px;z-index:80;}
+.n-btn{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-size:10px;font-weight:600;padding:4px 10px;border-radius:12px;transition:all .2s;min-width:56px;}
+.n-btn.on{color:var(--cyan);}
+.n-btn .n-ico{font-size:20px;line-height:1;}
+.n-dot{width:4px;height:4px;border-radius:50%;background:var(--cyan);margin:1px auto 0;}
+
+/* CHANNEL POPUP */
+.overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);align-items:flex-end;justify-content:center;}
+.overlay.center-modal{align-items:center;padding:20px;}
+.overlay.center-modal .sheet{border-radius:22px;max-height:80vh;animation:centerModalIn .28s cubic-bezier(.34,1.4,.64,1);}
+@keyframes centerModalIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+.overlay.open{display:flex;}
+.sheet{width:100%;max-width:480px;max-height:88vh;background:var(--card);border-radius:22px 22px 0 0;overflow:hidden;animation:slideUp .32s cubic-bezier(.34,1.4,.64,1);display:flex;flex-direction:column;}
+.sheet-handle{width:38px;height:4px;background:var(--border);border-radius:2px;margin:11px auto 0;}
+.sheet-hdr{padding:13px 18px 11px;border-bottom:1px solid var(--border);}
+.sheet-title{font-size:15px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.sheet-sub{font-size:12px;color:var(--sub);}
+.sheet-body{overflow-y:auto;padding:10px 13px 22px;flex:1;}
+.ch-item{display:flex;align-items:center;gap:13px;padding:12px 13px;border-radius:13px;border:1.5px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .18s;background:var(--card2);}
+.ch-item:active{border-color:var(--cyan);background:rgba(0,212,255,.05);}
+.ch-ico{width:46px;height:46px;border-radius:12px;flex-shrink:0;background:linear-gradient(135deg,#1E2A3E,#0d1220);display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--border);}
+.ch-name{font-size:14px;font-weight:700;color:var(--text);}
+.ch-qual{font-size:11px;color:var(--sub);margin-top:2px;}
+.ch-live-b{margin-left:auto;flex-shrink:0;background:rgba(239,68,68,.12);color:var(--red);font-size:10px;font-weight:700;padding:4px 9px;border-radius:10px;border:1px solid rgba(239,68,68,.28);display:flex;align-items:center;gap:4px;}
+
+/* ═══════ PLAYER SCREEN ═══════ */
+#playerScreen{background:#000;}
+.vid-zone{position:relative;background:#000;width:100%;aspect-ratio:16/9;flex-shrink:0;}
+.vid-zone:fullscreen,.vid-zone:-webkit-full-screen{width:100vw;height:100vh;aspect-ratio:unset;}
+#mainVideo{width:100%;height:100%;display:block;object-fit:contain;transition:transform .25s ease;}
+.p-topbar{position:absolute;top:0;left:0;right:0;z-index:20;padding:10px 14px;display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,rgba(0,0,0,.78) 0%,transparent 100%);opacity:0;pointer-events:none;transition:opacity .25s;}
+.p-topbar.vis{opacity:1;pointer-events:all;}
+.p-back{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;}
+.p-ch-name{font-size:14px;font-weight:700;color:#fff;flex:1;}
+.p-ch-sub{font-size:11px;color:rgba(255,255,255,.6);}
+.p-live-tag{display:flex;align-items:center;gap:4px;}
+.c-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:58px;height:58px;border-radius:50%;background:rgba(0,212,255,.18);backdrop-filter:blur(8px);border:2px solid rgba(0,212,255,.45);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;z-index:15;transition:opacity .2s, transform .18s;opacity:0;pointer-events:none;}
+.c-play.vis{opacity:1;pointer-events:all;}
+.c-play:active{transform:translate(-50%,-50%) scale(.9);}
+.v-loader{position:absolute;inset:0;z-index:14;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.55);gap:13px;}
+.spin{width:44px;height:44px;border:3px solid rgba(0,212,255,.2);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;}
+.v-load-txt{color:var(--cyan);font-size:13px;font-weight:600;}
+.v-load-ch{color:rgba(255,255,255,.5);font-size:11px;}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,212,255,.4),transparent);animation:scanLine 2.5s linear infinite;z-index:13;pointer-events:none;}
+.v-err{position:absolute;inset:0;z-index:16;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);gap:10px;padding:24px;text-align:center;}
+.v-err.show{display:flex;}
+.v-err-ico{font-size:46px;}
+.v-err-t{font-size:16px;font-weight:700;color:var(--text);}
+.v-err-m{font-size:12px;color:var(--sub);line-height:1.5;}
+.v-err-retry{margin-top:6px;background:var(--cyan);color:var(--bg);border-radius:12px;padding:10px 26px;font-size:13px;font-weight:700;}
+.v-err-switch{margin-top:4px;background:transparent;color:var(--sub);border:1.5px solid var(--border);border-radius:12px;padding:9px 22px;font-size:12px;font-weight:600;}
+.ctrl-ov{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(0deg,rgba(0,0,0,.72) 0%,transparent 45%);opacity:0;transition:opacity .25s;pointer-events:none;}
+.ctrl-ov.vis{opacity:1;pointer-events:all;}
+.ctrl-bar{padding:10px 14px 12px;}
+.prog-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.live-badge{background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.4px;flex-shrink:0;}
+.prog-bg{flex:1;height:3px;background:rgba(255,255,255,.18);border-radius:2px;}
+.prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),var(--purple));width:100%;}
+.prog-time{font-size:10px;color:rgba(255,255,255,.6);flex-shrink:0;}
+.ctrl-row{display:flex;align-items:center;gap:2px;}
+.c-btn{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;transition:background .13s;}
+.c-btn:active{background:rgba(255,255,255,.12);}
+.c-btn.big{font-size:24px;width:48px;height:48px;}
+.sp{flex:1;}
+
+.qual-btn{font-size:10px;font-weight:700;color:rgba(255,255,255,.7);background:rgba(255,255,255,.1);border-radius:6px;padding:4px 7px;}
+
+/* PLAYER INFO PANEL */
+.p-panel{background:var(--bg);flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h)+10px);}
+
+/* HORIZONTAL CHANNEL STRIP */
+.ch-strip-wrap{padding:12px 14px 6px;border-bottom:1px solid var(--border);}
+.ch-strip-lbl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin-bottom:9px;}
+.ch-strip{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px;}
+.ch-chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .18s;}
+.ch-chip-ico{width:48px;height:48px;border-radius:14px;background:var(--card);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .18s;}
+.ch-chip.on .ch-chip-ico{border-color:var(--cyan);background:rgba(0,212,255,.1);box-shadow:0 0 12px rgba(0,212,255,.25);}
+.ch-chip-name{font-size:9px;color:var(--muted);font-weight:600;text-align:center;max-width:52px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.ch-chip.on .ch-chip-name{color:var(--cyan);}
+.ch-chip-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:pulse-dot 1.3s infinite;}
+
+/* PLAYER NOW PLAYING INFO */
+.p-now-sec{padding:12px 14px 0;}
+.p-now-lbl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.9px;margin-bottom:7px;}
+.p-match-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+.p-match-t{font-size:15px;font-weight:800;color:var(--text);}
+.p-match-sc{font-size:13px;font-weight:700;color:var(--cyan);}
+.p-match-lg{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.p-stats-row{display:flex;gap:10px;margin-bottom:14px;}
+.p-stat{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;}
+.p-stat-v{font-size:14px;font-weight:800;color:var(--cyan);}
+.p-stat-l{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* PLAYER LIVE EVENTS */
+.p-events-sec{padding:12px 14px 0;}
+.p-sec-title{font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.7px;margin-bottom:9px;display:flex;align-items:center;gap:7px;}
+.p-sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.p-event-card{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:13px;background:var(--card);border:1.5px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .18s;}
+.p-event-card:active{transform:scale(.978);border-color:var(--cyan);}
+.p-event-flags{display:flex;gap:4px;font-size:22px;flex-shrink:0;}
+.p-event-info{flex:1;min-width:0;}
+.p-event-teams{font-size:12px;font-weight:700;color:var(--text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.p-event-league{font-size:10px;color:var(--muted);margin-top:1px;}
+.p-event-badge{flex-shrink:0;}
+.p-event-live{background:rgba(239,68,68,.12);color:var(--red);font-size:9px;font-weight:700;padding:3px 7px;border-radius:8px;border:1px solid rgba(239,68,68,.25);display:flex;align-items:center;gap:3px;}
+.p-event-time{color:var(--cyan);font-size:11px;font-weight:700;}
+
+/* PLAYER BOTTOM NAV */
+.p-bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:var(--nav-h);background:rgba(8,12,24,.97);backdrop-filter:blur(14px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;padding:6px 0 10px;z-index:80;}
+
+/* QUALITY POPUP */
+.q-sheet{width:100%;max-width:480px;background:var(--card);border-radius:22px 22px 0 0;animation:slideUp .28s cubic-bezier(.34,1.4,.64,1);overflow:hidden;}
+.q-item{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;font-size:14px;font-weight:600;color:var(--text);transition:background .15s;}
+.q-item:active{background:rgba(255,255,255,.04);}
+.q-item.sel{color:var(--cyan);}
+
+/* FAV SCREEN */
+#favScreen{padding-bottom:calc(var(--nav-h)+10px);}
+.fav-empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.fav-empty .e-ico{font-size:50px;margin-bottom:14px;}
+
+/* TV SCREEN */
+#tvScreen{padding-bottom:calc(var(--nav-h)+10px);}
+.tv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px;}
+.tv-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:15px 12px;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}
+.tv-card:active{transform:scale(.96);border-color:var(--cyan);}
+.tv-card-ico{font-size:32px;}
+.tv-card-name{font-size:13px;font-weight:700;color:var(--text);}
+.tv-card-q{font-size:10px;color:var(--muted);}
+.tv-live-b{background:rgba(239,68,68,.12);color:var(--red);font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;border:1px solid rgba(239,68,68,.25);display:flex;align-items:center;gap:3px;}
+
+/* ═══════ ADMIN PANEL ═══════ */
+#adminScreen{display:none;min-height:100vh;padding-bottom:20px;animation:slideRight .3s ease;}
+#adminScreen.active{display:block;}
+.admin-hdr{background:linear-gradient(135deg,#0d1220,#161D2F);border-bottom:2px solid var(--purple);padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:80;}
+.admin-hdr-title{font-size:17px;font-weight:800;color:var(--text);flex:1;}
+.admin-hdr-sub{font-size:11px;color:var(--purple);}
+.admin-logout{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;}
+.admin-body{padding:14px;}
+.admin-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;}
+.admin-card-title{font-size:13px;font-weight:800;color:var(--cyan);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.admin-card-title span{font-size:16px;}
+.a-form-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.a-label{font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.5px;margin-bottom:3px;}
+.a-input{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s;}
+.a-input:focus{border-color:var(--cyan);}
+.a-select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;-webkit-appearance:none;}
+.a-btn{width:100%;padding:12px;border-radius:12px;font-size:13px;font-weight:700;transition:all .18s;}
+.a-btn-cyan{background:linear-gradient(90deg,var(--cyan),var(--purple));color:#fff;}
+.a-btn-red{background:rgba(239,68,68,.15);color:var(--red);border:1.5px solid rgba(239,68,68,.3);}
+.a-btn-green{background:rgba(34,197,94,.15);color:var(--green);border:1.5px solid rgba(34,197,94,.3);}
+.a-btn:active{transform:scale(.97);}
+.admin-ch-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;background:var(--card2);border:1px solid var(--border);margin-bottom:7px;}
+.admin-ch-ico{font-size:20px;width:36px;height:36px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.admin-ch-info{flex:1;min-width:0;}
+.admin-ch-name{font-size:13px;font-weight:700;color:var(--text);}
+.admin-ch-url{font-size:10px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.admin-ch-del{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;flex-shrink:0;}
+.admin-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.admin-toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:13px;color:var(--text);font-weight:600;}
+.toggle-sub{font-size:11px;color:var(--muted);}
+.toggle-sw{width:44px;height:24px;border-radius:12px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle-sw.on{background:var(--cyan);}
+.toggle-sw::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;}
+.toggle-sw.on::after{transform:translateX(20px);}
+.stat-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.stat-box{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;}
+.stat-box-v{font-size:22px;font-weight:800;color:var(--cyan);}
+.stat-box-l{font-size:10px;color:var(--muted);margin-top:2px;}
+.admin-login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;background:var(--bg);}
+.admin-login-logo{margin-bottom:30px;}
+.admin-login-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;text-align:center;}
+.admin-login-sub{font-size:13px;color:var(--sub);margin-bottom:28px;text-align:center;}
+.admin-login-form{width:100%;max-width:360px;}
+.admin-login-form .a-form-row{margin-bottom:16px;}
+.admin-badge{background:linear-gradient(90deg,rgba(124,58,237,.2),rgba(0,212,255,.2));border:1px solid rgba(124,58,237,.4);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--purple);font-weight:700;margin-bottom:20px;letter-spacing:.5px;}
+
+/* SPLASH SCREEN */
+@keyframes splashLogoIn{0%{opacity:0;transform:scale(.6) translateY(10px);}60%{opacity:1;transform:scale(1.08) translateY(0);}100%{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes splashGlow{0%,100%{filter:drop-shadow(0 0 8px rgba(0,212,255,.4));}50%{filter:drop-shadow(0 0 22px rgba(0,212,255,.8));}}
+@keyframes splashTextIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes splashBarFill{from{width:0%;}to{width:100%;}}
+@keyframes splashFadeOut{from{opacity:1;}to{opacity:0;visibility:hidden;}}
+#splashScreen{
+  position:fixed;inset:0;z-index:9999;
+  background:radial-gradient(circle at 50% 40%,#0d1428 0%,var(--bg) 70%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+}
+#splashScreen.hide{animation:splashFadeOut .5s ease forwards;}
+.splash-logo-wrap{animation:splashLogoIn .7s cubic-bezier(.34,1.56,.64,1) forwards, splashGlow 2s ease-in-out infinite .7s;}
+.splash-title{font-size:24px;font-weight:900;letter-spacing:1px;opacity:0;animation:splashTextIn .5s ease forwards .5s;
+  background:linear-gradient(100deg,#00D4FF,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.splash-sub{font-size:11px;color:var(--muted);letter-spacing:2px;opacity:0;animation:splashTextIn .5s ease forwards .75s;}
+.splash-bar-bg{width:140px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin-top:8px;opacity:0;animation:splashTextIn .4s ease forwards 1s;}
+.splash-bar-fill{height:100%;background:linear-gradient(90deg,#00D4FF,#7C3AED);border-radius:2px;animation:splashBarFill 1.1s ease-out forwards 1.05s;width:0%;}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--nav-h)+14px);left:50%;transform:translateX(-50%) translateY(20px);background:rgba(15,22,40,.95);backdrop-filter:blur(10px);border:1px solid rgba(0,212,255,.2);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--text);font-weight:600;z-index:300;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="toast" id="toast"></div>
+
+<!-- SPLASH SCREEN -->
+<div id="splashScreen">
+  <div class="splash-logo-wrap">
+    <svg width="84" height="84" viewBox="0 0 36 36" fill="none">
+      <defs>
+        <linearGradient id="splashG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#00D4FF"/><stop offset="100%" stop-color="#7C3AED"/>
+        </linearGradient>
+      </defs>
+      <path d="M4 5 L18 2 L32 5 L32 18 Q32 28 18 34 Q4 28 4 18 Z" fill="rgba(0,212,255,.12)" stroke="url(#splashG)" stroke-width="1.6"/>
+      <text x="18" y="24" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="14" font-weight="900" fill="url(#splashG)">NG</text>
+    </svg>
+  </div>
+  <div class="splash-title">NEXTGEN ARENA</div>
+  <div class="splash-sub">LIVE SPORTS STREAMING</div>
+  <div class="splash-bar-bg"><div class="splash-bar-fill"></div></div>
+</div>
+
+<!-- HOME SCREEN -->
+<div id="homeScreen" class="screen active">
+  <div class="hdr">
+    <div class="hdr-logo" onclick="onLogoTripleClick()">
+      <svg width="142" height="42" viewBox="0 0 132 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ng1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00D4FF"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient>
+          <linearGradient id="ng2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#00D4FF"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient>
+          <linearGradient id="ng3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00D4FF" stop-opacity=".9"/><stop offset="100%" stop-color="#7C3AED" stop-opacity=".9"/></linearGradient>
+          <filter id="gf"><feGaussianBlur stdDeviation="1.2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+        </defs>
+        <g filter="url(#gf)">
+          <path d="M4 6 L20 2 L36 6 L36 20 Q36 31 20 38 Q4 31 4 20 Z" fill="url(#ng3)" opacity=".12"/>
+          <path d="M4 6 L20 2 L36 6 L36 20 Q36 31 20 38 Q4 31 4 20 Z" fill="none" stroke="url(#ng2)" stroke-width="1.6"/>
+          <text x="20" y="26" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="14" font-weight="900" fill="url(#ng2)" letter-spacing="-1">NG</text>
+          <circle cx="20" cy="2" r="2.2" fill="#00D4FF" opacity=".9"/>
+        </g>
+        <text x="44" y="17" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="900" fill="url(#ng2)" letter-spacing="2.2">NEXTGEN</text>
+        <text x="44" y="34" font-family="'Segoe UI',Arial,sans-serif" font-size="15" font-weight="900" letter-spacing="3.8" fill="#E2E8F0">ARENA</text>
+        <line x1="44" y1="37.5" x2="128" y2="37.5" stroke="url(#ng2)" stroke-width="1.1" opacity=".45"/>
+      </svg>
+    </div>
+    <div class="hdr-actions">
+      <button class="hdr-btn" onclick="toggleSearch()">🔍</button>
+      <button class="hdr-btn" onclick="openNotifications()">🔔<span class="badge" id="notifBadge" style="display:none">0</span></button>
+    </div>
+  </div>
+  <div class="ticker"><div class="ticker-inner" id="tickerInner"></div></div>
+  <div id="searchWrap" class="search-wrap" style="display:none"><input id="searchInp" type="text" placeholder="Search teams, leagues, channels…" oninput="onSearch()"/></div>
+  <div class="banner" id="updateBanner"><span>🔄</span><span>NextGen Arena v1.0 — <span class="lnk">Latest version</span></span></div>
+  <div id="apiStatusBar" style="display:none;margin:0 14px 10px;border-radius:10px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);padding:8px 13px;font-size:11px;color:var(--sub);align-items:center;gap:7px;">
+    <span style="color:var(--cyan)">⏳</span> Connecting to live schedule API...
+  </div>
+  <div class="sport-tabs" id="sportTabs"></div>
+  <div class="pills" id="pills"></div>
+  <div id="matchList"></div>
+</div>
+
+<!-- FAV SCREEN -->
+<div id="favScreen" class="screen">
+  <div class="hdr"><div style="display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;color:#E2E8F0">⭐ Favorites</div></div>
+  <div id="favList"></div>
+</div>
+
+<!-- TV SCREEN -->
+<div id="tvScreen" class="screen">
+  <div class="hdr"><div style="display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;color:#E2E8F0">📺 TV Channels</div></div>
+  <div class="sec-lbl" style="padding:12px 14px 6px">ALL CHANNELS</div>
+  <div class="tv-grid" id="tvGrid"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav" id="homeNav">
+  <button class="n-btn on" id="nb-home" onclick="navTo('home')"><span class="n-ico">🏠</span>Home<div class="n-dot"></div></button>
+  <button class="n-btn" id="nb-live" onclick="navTo('live')"><span class="n-ico">📡</span>Live</button>
+  <button class="n-btn" id="nb-fav" onclick="navTo('fav')"><span class="n-ico">⭐</span>Favorites</button>
+  <button class="n-btn" id="nb-tv" onclick="navTo('tv')"><span class="n-ico">📺</span>Channels</button>
+</div>
+
+<!-- CHANNEL POPUP -->
+<div class="overlay center-modal" id="chPopup" onclick="outsideClose(event,'chPopup')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title" id="popTitle">Select Channel</div><div class="sheet-sub" id="popSub">Choose a channel to watch live</div></div>
+    <div class="sheet-body" id="popList"></div>
+  </div>
+</div>
+
+<!-- QUALITY POPUP -->
+<div class="overlay" id="qualPopup" onclick="outsideClose(event,'qualPopup')">
+  <div class="q-sheet">
+    <div class="sheet-handle" style="margin:11px auto;"></div>
+    <div style="padding:4px 18px 8px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;">STREAM QUALITY</div>
+    <div id="qualList"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS POPUP -->
+<div class="overlay" id="notifPopup" onclick="outsideClose(event,'notifPopup')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr">
+      <div class="sheet-title">🔔 Notifications</div>
+      <div class="sheet-sub">Live matches ও আপনার favorite ম্যাচের আপডেট</div>
+    </div>
+    <div class="sheet-body" id="notifList"></div>
+  </div>
+</div>
+
+<!-- PLAYER SCREEN -->
+
+<div id="playerScreen" class="screen">
+  <div class="vid-zone" id="vidZone" onclick="tapVideo()">
+    <div class="p-topbar" id="pTopbar">
+      <button class="p-back" onclick="goHome()">←</button>
+      <div style="flex:1"><div class="p-ch-name" id="pChName">Loading…</div><div class="p-ch-sub" id="pChSub"></div></div>
+      <div class="p-live-tag"><div class="l-dot"></div><span style="font-size:11px;color:var(--red);font-weight:800;margin-left:4px">LIVE</span></div>
+    </div>
+    <video id="mainVideo" playsinline autoplay></video>
+    <div class="scan-line" id="scanLine"></div>
+    <button class="c-play" id="cPlay" onclick="togglePlay(event)">▶</button>
+    <div class="v-loader" id="vLoader"><div class="spin"></div><div class="v-load-txt">Connecting to stream…</div><div class="v-load-ch" id="vLoadCh"></div></div>
+    <div class="v-err" id="vErr"><div class="v-err-ico">📡</div><div class="v-err-t">Stream Unavailable</div><div class="v-err-m" id="vErrMsg">This channel may be offline or geo-restricted.</div><button class="v-err-retry" onclick="retryStream()">↺ Retry</button><button class="v-err-switch" onclick="tryNextChannel()">⏭ পরের চ্যানেল ট্রাই করুন</button>
+      <button class="v-err-switch" onclick="openChPopupFromPlayer()" style="margin-top:6px">📺 সব চ্যানেল দেখুন</button></div>
+    <div class="ctrl-ov" id="ctrlOv">
+      <div class="ctrl-bar">
+        <div class="prog-row"><div class="live-badge">● LIVE</div><div class="prog-bg"><div class="prog-fill"></div></div><div class="prog-time" id="liveTime">--:--</div></div>
+        <div class="ctrl-row">
+          <button class="c-btn" onclick="doSkip(-10,event)">⏪</button>
+          <button class="c-btn big" id="ppBtn" onclick="togglePlay(event)">⏸</button>
+          <button class="c-btn" onclick="doSkip(10,event)">⏩</button>
+          <div class="sp"></div>
+          <button class="c-btn qual-btn" onclick="toggleFitMode(event)" id="fitModeBtn" title="Video fit mode">FIT</button>
+          <button class="c-btn qual-btn" onclick="openQualPop(event)" id="qualBtnLabel">HD</button>
+          <button class="c-btn" onclick="toggleFS(event)">⛶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Channel Strip (horizontal) -->
+  <div class="ch-strip-wrap">
+    <div class="ch-strip-lbl">📺 CHANNELS</div>
+    <div class="ch-strip" id="chStrip"></div>
+  </div>
+
+  <!-- Player Info -->
+  <div class="p-panel">
+    <div class="p-now-sec">
+      <div class="p-now-lbl">NOW WATCHING</div>
+      <div class="p-match-row"><div class="p-match-t" id="pMatchT">—</div><div class="p-match-sc" id="pMatchSc"></div></div>
+      <div class="p-match-lg" id="pMatchLg"></div>
+      <div class="p-stats-row" id="pStatsRow"></div>
+    </div>
+    <!-- Live Events in Player -->
+    <div class="p-events-sec">
+      <div class="p-sec-title">🔴 LIVE EVENTS</div>
+      <div id="playerEventList"></div>
+    </div>
+  </div>
+
+  <div class="p-bnav">
+    <button class="n-btn" onclick="goHome()"><span class="n-ico">🏠</span>Home</button>
+    <button class="n-btn on"><span class="n-ico">▶</span>Playing<div class="n-dot"></div></button>
+    <button class="n-btn" onclick="toggleFav()"><span class="n-ico" id="favIcon">⭐</span>Favorite</button>
+    <button class="n-btn" onclick="openChPopupFromPlayer()"><span class="n-ico">📺</span>Channels</button>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLoginScreen" class="screen">
+  <div class="admin-login">
+    <div class="admin-login-logo">
+      <svg width="60" height="60" viewBox="0 0 36 36" fill="none">
+        <path d="M4 5 L18 2 L32 5 L32 18 Q32 28 18 34 Q4 28 4 18 Z" fill="rgba(0,212,255,.1)" stroke="url(#ng2)" stroke-width="1.5"/>
+        <text x="18" y="23" text-anchor="middle" font-family="Segoe UI" font-size="12" font-weight="900" fill="#00D4FF">NG</text>
+      </svg>
+    </div>
+    <div class="admin-badge">🔐 ADMIN ACCESS ONLY</div>
+    <div class="admin-login-title">NextGen Arena</div>
+    <div class="admin-login-sub">Secret Admin Panel<br>Authorized Personnel Only</div>
+    <div class="admin-login-form">
+      <div class="a-form-row"><div class="a-label">USERNAME</div><input class="a-input" id="adminUser" type="text" placeholder="Enter username"/></div>
+      <div class="a-form-row"><div class="a-label">PASSWORD</div><input class="a-input" id="adminPass" type="password" placeholder="Enter password"/></div>
+      <button class="a-btn a-btn-cyan" onclick="doAdminLogin()" style="margin-bottom:10px">🔓 Login to Admin Panel</button>
+      <button class="a-btn" onclick="goHome()" style="color:var(--muted);background:var(--card2);border:1px solid var(--border)">← Back to App</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminScreen" class="screen">
+  <div class="admin-hdr">
+    <div>
+      <div class="admin-hdr-title">⚡ Admin Panel</div>
+      <div class="admin-hdr-sub">NextGen Arena Control Center</div>
+    </div>
+    <button class="admin-logout" onclick="adminLogout()">Logout</button>
+  </div>
+  <div class="admin-body">
+
+    <!-- Stats -->
+    <div class="admin-card">
+      <div class="admin-card-title"><span>📊</span> App Statistics</div>
+      <button class="a-btn a-btn-green" style="margin-bottom:12px" onclick="adminForceRefresh()">🔄 Refresh API Data Now</button>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-box-v" id="statCh">12</div><div class="stat-box-l">Channels</div></div>
+        <div class="stat-box"><div class="stat-box-v" id="statMatch">12</div><div class="stat-box-l">Matches</div></div>
+        <div class="stat-box"><div class="stat-box-v" id="statLive">2</div><div class="stat-box-l">Live Now</div></div>
+      </div>
+    </div>
+
+    <!-- Add Channel -->
+    <div class="admin-card">
+      <div class="admin-card-title"><span>➕</span> Add New Channel</div>
+      <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--gold);line-height:1.6;">
+        ⚠️ গুরুত্বপূর্ণ: শুধু <b>https://</b> দিয়ে শুরু হওয়া লিংক যোগ করুন (http:// লিংক HTTPS সাইটে ব্লক হয়ে যাবে)। DASH (.mpd) চ্যানেল সাধারণত DRM-protected থাকে এবং ব্রাউজারে সরাসরি চলে না — তাই HLS (.m3u8) লিংক ব্যবহার করুন।
+      </div>
+      <div class="a-form-row"><div class="a-label">CHANNEL NAME</div><input class="a-input" id="newChName" placeholder="e.g. ESPN HD"/></div>
+      <div class="a-form-row"><div class="a-label">ICON (emoji — লোগো না দিলে এটা দেখাবে)</div><input class="a-input" id="newChIcon" placeholder="📺" maxlength="4"/></div>
+      <div class="a-form-row"><div class="a-label">🖼️ LOGO IMAGE URL (optional)</div><input class="a-input" id="newChLogoUrl" placeholder="https://...logo.png" type="url"/></div>
+      <div class="a-form-row">
+        <div class="a-label">🖼️ অথবা LOGO IMAGE আপলোড করুন (optional)</div>
+        <input class="a-input" id="newChLogoFile" type="file" accept="image/*" style="padding:8px;"/>
+        <div id="newChLogoPreview" style="display:none;margin-top:8px;"><img id="newChLogoPreviewImg" style="width:48px;height:48px;border-radius:10px;object-fit:contain;background:var(--card2);border:1px solid var(--border);padding:4px;"/></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">💡 ছোট সাইজের ছবি (৫০-১০০KB) recommend করা হচ্ছে — বড় ছবি app slow করতে পারে। URL ও Upload দুটোই দিলে Upload-টা প্রাধান্য পাবে।</div>
+      </div>
+      <div class="a-form-row"><div class="a-label">STREAM URL (M3U8 or MPD)</div><input class="a-input" id="newChUrl" placeholder="https://...stream.m3u8" type="url"/></div>
+      <div class="a-form-row">
+        <div class="a-label">QUALITY</div>
+        <select class="a-select a-input" id="newChQual"><option>HD</option><option>1080p</option><option>720p</option><option>480p</option><option>SD</option></select>
+      </div>
+      <div class="a-form-row">
+        <div class="a-label">TYPE</div>
+        <select class="a-select a-input" id="newChType"><option value="hls">HLS (.m3u8)</option><option value="dash">DASH (.mpd)</option></select>
+      </div>
+      <button class="a-btn a-btn-cyan" onclick="adminAddChannel()">➕ Add Channel</button>
+    </div>
+
+    <!-- Channel List -->
+    <div class="admin-card">
+      <div class="admin-card-title"><span>📋</span> Manage Channels</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;">
+        💡 এখানে শুধু আপনার নিজের manually যোগ করা চ্যানেল থাকবে — কোনো dummy/demo চ্যানেল hardcode করা নেই। Browser data clear করলেও এই লিস্ট খালি থেকে শুরু হবে, পুরনো demo চ্যানেল আর কখনো reappear করবে না।
+      </div>
+      <div id="adminChList"></div>
+    </div>
+
+    <!-- Score Override -->
+    <div class="admin-card">
+      <div class="admin-card-title"><span>🎯</span> Set/Fix Final Score</div>
+      <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.18);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--sub);line-height:1.6;">
+        💡 কোনো ম্যাচের score API থেকে না এলে বা ভুল হলে এখান থেকে নিজে বসিয়ে দিন — এটাই সবচেয়ে উচ্চ priority পাবে, app নিজে নিজে সেটাই দেখাবে।
+      </div>
+      <div class="a-form-row">
+        <div class="a-label">ম্যাচ বাছাই করুন</div>
+        <select class="a-select a-input" id="ovMatchSelect" onchange="onOverrideMatchSelect()"></select>
+      </div>
+      <div class="a-form-row" style="flex-direction:row;gap:8px">
+        <div style="flex:1"><div class="a-label">SCORE A</div><input class="a-input" id="ovScoreA" placeholder="e.g. 2"/></div>
+        <div style="flex:1"><div class="a-label">SCORE B</div><input class="a-input" id="ovScoreB" placeholder="e.g. 1"/></div>
+      </div>
+      <button class="a-btn a-btn-cyan" style="margin-bottom:8px" onclick="adminSetOverride()">✅ Save Score</button>
+      <button class="a-btn a-btn-red" onclick="adminRemoveOverride()">🗑️ Remove Override (API/auto score ফিরিয়ে দিন)</button>
+    </div>
+
+    <!-- Add Match -->
+    <div class="admin-card">
+      <div class="admin-card-title"><span>🏆</span> Add Match / Event</div>
+      <div class="a-form-row"><div class="a-label">TEAM A NAME</div><input class="a-input" id="newMA" placeholder="e.g. Brazil"/></div>
+      <div class="a-form-row"><div class="a-label">TEAM A FLAG (emoji)</div><input class="a-input" id="newMAf" placeholder="🇧🇷" maxlength="4"/></div>
+      <div class="a-form-row"><div class="a-label">TEAM B NAME</div><input class="a-input" id="newMB" placeholder="e.g. Germany"/></div>
+      <div class="a-form-row"><div class="a-label">TEAM B FLAG (emoji)</div><input class="a-input" id="newMBf" placeholder="🇩🇪" maxlength="4"/></div>
+      <div class="a-form-row"><div class="a-label">LEAGUE / TOURNAMENT</div><input class="a-input" id="newMLg" placeholder="FIFA World Cup 2026"/></div>
+      <div class="a-form-row"><div class="a-label">LEAGUE ICON (emoji)</div><input class="a-input" id="newMLi" placeholder="🏆" maxlength="4"/></div>
+      <div class="a-form-row">
+        <div class="a-label">SPORT</div>
+        <select class="a-select a-input" id="newMSport"><option value="football">Football</option><option value="cricket">Cricket</option><option value="baseball">Baseball</option><option value="boxing">Boxing</option><option value="hockey">Hockey</option><option value="racing">Racing</option></select>
+      </div>
+      <div class="a-form-row"><div class="a-label">VENUE (optional)</div><input class="a-input" id="newMVenue" placeholder="e.g. Mirpur, Bangladesh"/></div>
+      <div class="a-form-row">
+        <div class="a-label">MATCH DATE &amp; TIME (আপনার লোকাল সময়ে দিন)</div>
+        <input class="a-input" id="newMDateTime" type="datetime-local"/>
+      </div>
+      <div class="a-form-row">
+        <div class="a-label">MATCH DURATION (status auto-calculate করতে)</div>
+        <select class="a-select a-input" id="newMDur">
+          <option value="130">⚽ Football (~2h 10m)</option>
+          <option value="210">🏏 T20 Cricket (~3h 30m)</option>
+          <option value="480">🏏 ODI Cricket (~8h)</option>
+          <option value="2880">🏏 Test Match (multi-day, ~2 days window)</option>
+          <option value="150">🏒 Hockey / Other (~2h 30m)</option>
+        </select>
+      </div>
+      <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.18);border-radius:10px;padding:10px 12px;margin-bottom:4px;font-size:11px;color:var(--sub);line-height:1.6;">
+        💡 Status (Live/Upcoming/Recent) এখন ম্যানুয়ালি বাছাই করতে হয় না — উপরে দেওয়া তারিখ/সময়ের ভিত্তিতে অ্যাপ স্বয়ংক্রিয়ভাবে রিয়েল-টাইম ক্যালকুলেট করবে।
+      </div>
+      <div class="a-form-row" style="flex-direction:row;gap:8px;margin-top:8px">
+        <div style="flex:1"><div class="a-label">FINAL SCORE A (যদি খেলা শেষ হয়ে থাকে)</div><input class="a-input" id="newMFinalA" placeholder="e.g. 2 or 245/6"/></div>
+        <div style="flex:1"><div class="a-label">FINAL SCORE B</div><input class="a-input" id="newMFinalB" placeholder="e.g. 1 or 240/8"/></div>
+      </div>
+      <button class="a-btn a-btn-cyan" onclick="adminAddMatch()">➕ Add Match</button>
+    </div>
+
+    <!-- App Settings -->
+    <div class="admin-card">
+      <div class="admin-card-title"><span>⚙️</span> App Settings</div>
+      <div class="admin-toggle-row">
+        <div><div class="toggle-label">Show Update Banner</div><div class="toggle-sub">Display update notice on home</div></div>
+        <div class="toggle-sw on" id="tog-banner" onclick="toggleSetting('banner')"></div>
+      </div>
+      <div class="admin-toggle-row">
+        <div><div class="toggle-label">Live Ticker</div><div class="toggle-sub">Scrolling news ticker</div></div>
+        <div class="toggle-sw on" id="tog-ticker" onclick="toggleSetting('ticker')"></div>
+      </div>
+      <div class="admin-toggle-row">
+        <div><div class="toggle-label">HOT Badge on Matches</div><div class="toggle-sub">Show 🔥 HOT on featured matches</div></div>
+        <div class="toggle-sw on" id="tog-hotbadge" onclick="toggleSetting('hotbadge')"></div>
+      </div>
+    </div>
+
+    <!-- Change Admin Password -->
+    <div class="admin-card">
+      <div class="admin-card-title"><span>🔐</span> Change Admin Password</div>
+      <div class="a-form-row"><div class="a-label">CURRENT PASSWORD</div><input class="a-input" id="curPass" type="password" placeholder="Current password"/></div>
+      <div class="a-form-row"><div class="a-label">NEW PASSWORD</div><input class="a-input" id="newPass" type="password" placeholder="New password"/></div>
+      <div class="a-form-row"><div class="a-label">CONFIRM NEW PASSWORD</div><input class="a-input" id="conPass" type="password" placeholder="Confirm new password"/></div>
+      <button class="a-btn a-btn-green" onclick="changeAdminPass()">🔐 Update Password</button>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="admin-card" style="border-color:rgba(239,68,68,.3)">
+      <div class="admin-card-title" style="color:var(--red)"><span>⚠️</span> Danger Zone</div>
+      <button class="a-btn a-btn-red" style="margin-bottom:8px" onclick="adminResetChannels()">🗑️ Reset Channels to Default</button>
+      <button class="a-btn a-btn-red" onclick="adminResetAll()">⚠️ Reset All Data (Factory Reset)</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+/* ════ LOCAL STORAGE KEYS ════ */
+const LS = {
+  CHANNELS:'nga_channels', MATCHES:'nga_matches', SETTINGS:'nga_settings',
+  SESSION:'nga_session', FAVS:'nga_favs', ADMIN_PASS:'nga_admin_pass',
+  SCORE_OVERRIDES:'nga_score_overrides'
+};
+const ADMIN_DEFAULT_USER = 'admin';
+const ADMIN_DEFAULT_PASS = 'nextgen2026';
+
+/* ════ DEFAULT DATA ════ */
+// কোনো dummy/demo চ্যানেল hardcode করা নেই — Admin Panel থেকে যা manually add করা হবে
+// সেটাই একমাত্র স্থায়ী চ্যানেল লিস্ট, এমনকি localStorage/browser data clear করলেও
+// এই খালি array-ই ফিরে আসবে, কোনো পুরনো demo চ্যানেল আর কখনো reappear করবে না।
+const DEFAULT_CHANNELS = [];
+// রিয়েল, ভেরিফাইড শিডিউল (যাচাই করা তারিখ: ১৮ জুন ২০২৬)
+// startISO = ম্যাচ শুরুর সঠিক UTC সময়। প্রতিটি ম্যাচের status (live/upcoming/recent)
+// এখন থেকে ডিভাইসের real-time clock দিয়ে স্বয়ংক্রিয়ভাবে calculate হবে — হার্ডকোড করা status নেই।
+const DEFAULT_MATCHES = [
+  // ───── CRICKET: অস্ট্রেলিয়া বাংলাদেশ T20I সিরিজ ─────
+  {id:1, sport:"cricket", league:"AUSTRALIA TOUR OF BANGLADESH • 1st T20I", li:"🏏",
+   A:{n:"Bangladesh",f:"🇧🇩"}, B:{n:"Australia",f:"🇦🇺"},
+   venue:"Chattogram, Bangladesh", startISO:"2026-06-17T08:00:00Z", durationMin:210,
+   final:{a:"131",b:"133/6"}, hot:true},
+  {id:2, sport:"cricket", league:"AUSTRALIA TOUR OF BANGLADESH • 2nd T20I", li:"🏏",
+   A:{n:"Bangladesh",f:"🇧🇩"}, B:{n:"Australia",f:"🇦🇺"},
+   venue:"Chattogram, Bangladesh", startISO:"2026-06-19T08:00:00Z", durationMin:210, hot:true},
+  {id:3, sport:"cricket", league:"AUSTRALIA TOUR OF BANGLADESH • 3rd T20I", li:"🏏",
+   A:{n:"Bangladesh",f:"🇧🇩"}, B:{n:"Australia",f:"🇦🇺"},
+   venue:"Chattogram, Bangladesh", startISO:"2026-06-21T08:00:00Z", durationMin:210, hot:false},
+  // ───── CRICKET: আফগানিস্তান ভারত ODI সিরিজ ─────
+  {id:4, sport:"cricket", league:"AFGHANISTAN TOUR OF INDIA • 2nd ODI", li:"🏏",
+   A:{n:"India",f:"🇮🇳"}, B:{n:"Afghanistan",f:"🇦🇫"},
+   venue:"Lucknow, India", startISO:"2026-06-17T08:00:00Z", durationMin:480,
+   final:{a:"402",b:"232"}, hot:true},
+  {id:5, sport:"cricket", league:"AFGHANISTAN TOUR OF INDIA • 3rd ODI", li:"🏏",
+   A:{n:"India",f:"🇮🇳"}, B:{n:"Afghanistan",f:"🇦🇫"},
+   venue:"Chennai, India", startISO:"2026-06-20T08:00:00Z", durationMin:480, hot:true},
+  // ───── FOOTBALL: FIFA WORLD CUP 2026 — আজকের ও আসন্ন ম্যাচ ─────
+  {id:6, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP A", li:"🏆",
+   A:{n:"Czechia",f:"🇨🇿"}, B:{n:"South Africa",f:"🇿🇦"},
+   venue:"Atlanta, USA", startISO:"2026-06-18T16:00:00Z", durationMin:130, hot:false},
+  {id:7, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP B", li:"🏆",
+   A:{n:"Switzerland",f:"🇨🇭"}, B:{n:"Bosnia and Herzegovina",f:"🇧🇦"},
+   venue:"Inglewood, USA", startISO:"2026-06-18T19:00:00Z", durationMin:130, hot:false},
+  {id:8, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP B", li:"🏆",
+   A:{n:"Canada",f:"🇨🇦"}, B:{n:"Qatar",f:"🇶🇦"},
+   venue:"Vancouver, Canada", startISO:"2026-06-18T22:00:00Z", durationMin:130, hot:true},
+  {id:9, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP A", li:"🏆",
+   A:{n:"Mexico",f:"🇲🇽"}, B:{n:"South Korea",f:"🇰🇷"},
+   venue:"Zapopan, Mexico", startISO:"2026-06-19T01:00:00Z", durationMin:130, hot:true},
+  {id:10, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP D", li:"🏆",
+   A:{n:"USA",f:"🇺🇸"}, B:{n:"Australia",f:"🇦🇺"},
+   venue:"Seattle, USA", startISO:"2026-06-19T19:00:00Z", durationMin:130, hot:true},
+  {id:11, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP C", li:"🏆",
+   A:{n:"Scotland",f:"🏴"}, B:{n:"Morocco",f:"🇲🇦"},
+   venue:"Foxborough, USA", startISO:"2026-06-19T22:00:00Z", durationMin:130, hot:false},
+  {id:12, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP C", li:"🏆",
+   A:{n:"Brazil",f:"🇧🇷"}, B:{n:"Haiti",f:"🇭🇹"},
+   venue:"Philadelphia, USA", startISO:"2026-06-20T01:00:00Z", durationMin:130, hot:true},
+  // ───── FOOTBALL: FIFA WORLD CUP 2026 — সাম্প্রতিক ফলাফল ─────
+  {id:13, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP A", li:"🏆",
+   A:{n:"Mexico",f:"🇲🇽"}, B:{n:"South Africa",f:"🇿🇦"},
+   venue:"Mexico City, Mexico", startISO:"2026-06-11T19:00:00Z", durationMin:130,
+   final:{a:"2",b:"0"}, hot:false},
+  {id:14, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP A", li:"🏆",
+   A:{n:"South Korea",f:"🇰🇷"}, B:{n:"Czechia",f:"🇨🇿"},
+   venue:"Zapopan, Mexico", startISO:"2026-06-11T16:00:00Z", durationMin:130,
+   final:{a:"2",b:"1"}, hot:false},
+  {id:15, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP D", li:"🏆",
+   A:{n:"USA",f:"🇺🇸"}, B:{n:"Paraguay",f:"🇵🇾"},
+   venue:"Inglewood, USA", startISO:"2026-06-12T19:00:00Z", durationMin:130,
+   final:{a:"4",b:"1"}, hot:true},
+  {id:16, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP C", li:"🏆",
+   A:{n:"Brazil",f:"🇧🇷"}, B:{n:"Morocco",f:"🇲🇦"},
+   venue:"East Rutherford, USA", startISO:"2026-06-13T19:00:00Z", durationMin:130,
+   final:{a:"1",b:"1"}, hot:true},
+  {id:17, sport:"football", league:"FIFA WORLD CUP 2026 • GROUP E", li:"🏆",
+   A:{n:"Germany",f:"🇩🇪"}, B:{n:"Curaçao",f:"🇨🇼"},
+   venue:"Houston, USA", startISO:"2026-06-14T19:00:00Z", durationMin:130,
+   final:{a:"7",b:"1"}, hot:false},
+];
+const DEFAULT_SETTINGS = {banner:true,ticker:true,hotbadge:true};
+const CATS = [
+  {id:"all",lbl:"All",ico:"⚡",cnt:88},{id:"cricket",lbl:"Cricket",ico:"🏏",cnt:7},
+  {id:"football",lbl:"Football",ico:"⚽",cnt:64},{id:"boxing",lbl:"Boxing",ico:"🥊",cnt:4},
+  {id:"baseball",lbl:"Baseball",ico:"⚾",cnt:10},{id:"racing",lbl:"Racing",ico:"🏎️",cnt:2},{id:"hockey",lbl:"Hockey",ico:"🏒",cnt:1},
+];
+
+/* ════ LOAD FROM LOCALSTORAGE ════ */
+function lsGet(key,def){try{const v=localStorage.getItem(key);return v?JSON.parse(v):def;}catch(e){return def;}}
+function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
+
+let CHANNELS = lsGet(LS.CHANNELS, DEFAULT_CHANNELS);
+
+// চ্যানেল লোগো (image URL/base64) থাকলে img দেখায়, না থাকলে emoji icon — load fail হলে emoji-তে fallback
+function chLogoHTML(ch, sizeClass){
+  if(ch.logo){
+    return `<img src="${ch.logo}" alt="${ch.name}" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"/><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:inherit;">${ch.icon||'📺'}</span>`;
+  }
+  return ch.icon||'📺';
+}
+let MATCHES  = lsGet(LS.MATCHES,  DEFAULT_MATCHES);
+let SETTINGS = lsGet(LS.SETTINGS, DEFAULT_SETTINGS);
+let favorites = lsGet(LS.FAVS, []);
+let scoreOverrides = lsGet(LS.SCORE_OVERRIDES, {});
+
+/* ════ SCORE OVERRIDE SYSTEM ════
+   Admin কোনো ম্যাচের ফাইনাল স্কোর ম্যানুয়ালি বসাতে পারে —
+   API থেকে score না এলেও এটা সবচেয়ে উচ্চ priority পায়। */
+function overrideKey(m) {
+  const d = new Date(m.startISO);
+  const dateKey = d.toISOString().slice(0,10); // YYYY-MM-DD
+  return `${(m.A.n||'').toLowerCase().trim()}|${(m.B.n||'').toLowerCase().trim()}|${dateKey}`;
+}
+function getOverride(m) {
+  return scoreOverrides[overrideKey(m)] || null;
+}
+function setOverride(m, a, b) {
+  scoreOverrides[overrideKey(m)] = { a, b };
+  lsSet(LS.SCORE_OVERRIDES, scoreOverrides);
+}
+function removeOverride(m) {
+  delete scoreOverrides[overrideKey(m)];
+  lsSet(LS.SCORE_OVERRIDES, scoreOverrides);
+}
+// final score lookup: override থাকলে সেটা > API/static এর final
+function effectiveFinal(m) {
+  const ov = getOverride(m);
+  if (ov) return ov;
+  return m.final || null;
+}
+
+/* ════════════════════════════════════════════
+   API FETCH LAYER
+   /api/football  ও  /api/cricket  (Vercel serverless)
+   থেকে ম্যাচ টেনে আনে এবং Admin-এ ম্যানুয়ালি
+   যোগ করা extra ম্যাচের সাথে merge করে।
+   API না থাকলে স্বয়ংক্রিয়ভাবে local fallback data ব্যবহার হয়।
+════════════════════════════════════════════ */
+const API_BASE = ''; // same origin, Vercel-এ /api/* automatically routes
+let _apiLoaded = false;
+let _apiLoadTime = 0;
+const API_REFRESH_MS = 5 * 60 * 1000; // 5 মিনিট পর পর রিফ্রেশ
+
+async function loadApiMatches(force = false) {
+  if (!force && _apiLoaded && Date.now() - _apiLoadTime < API_REFRESH_MS) return;
+
+  // Admin-এ manually যোগ করা ম্যাচ (localStorage-এ custom id দিয়ে চেনা যায়)
+  const manualMatches = lsGet(LS.MATCHES, []).filter(m => typeof m.id === 'number' && m.id > 1000000);
+
+  let fbMatches = [], crMatches = [];
+  const results = await Promise.allSettled([
+    fetch(API_BASE + '/api/football').then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch(API_BASE + '/api/cricket').then(r => r.ok ? r.json() : null).catch(() => null),
+  ]);
+
+  if (results[0].status === 'fulfilled' && results[0].value?.matches) {
+    fbMatches = results[0].value.matches;
+  }
+  if (results[1].status === 'fulfilled' && results[1].value?.matches) {
+    crMatches = results[1].value.matches;
+  }
+
+  const apiMatches = [...fbMatches, ...crMatches];
+  const fbOk = results[0].status === 'fulfilled' && results[0].value !== null;
+  const crOk = results[1].status === 'fulfilled' && results[1].value !== null;
+  const anyApiResponded = fbOk || crOk;
+
+  if (apiMatches.length > 0) {
+    // API ম্যাচ + manual ম্যাচ merge
+    const manualIds = new Set(manualMatches.map(m => String(m.id)));
+    const fresh = apiMatches.filter(m => !manualIds.has(String(m.id)));
+    MATCHES = [...manualMatches, ...fresh];
+    _apiLoaded = true;
+    _apiLoadTime = Date.now();
+    renderMatches(); renderPills(); renderCats(); renderTicker(); renderNotifBadge();
+    updateApiStatusBar('live', fbMatches.length, crMatches.length);
+  } else if (anyApiResponded) {
+    // API respond করেছে কিন্তু ম্যাচ নেই (off-season বা key সমস্যা নেই)
+    updateApiStatusBar('connected_empty', 0, 0);
+  } else {
+    // API সম্পূর্ণ কাজ করছে না — static fallback
+    updateApiStatusBar('fallback', 0, 0);
+  }
+}
+
+function updateApiStatusBar(state, fb, cr) {
+  // এই status bar permanently hide রাখা হয়েছে (ব্যবহারকারীর অনুরোধে)
+  // ম্যাচ ডাটা ঠিকই API থেকে আসছে, শুধু এই ব্যানারটা আর দেখানো হয় না
+  const el = document.getElementById('apiStatusBar');
+  if (el) el.style.display = 'none';
+}
+
+/* ════ STATE ════ */
+let activeSport='all', activeFilter='all', activeNav='home';
+let searchQ='', currentMatch=null, currentCh=null;
+let hls=null, ctrlTimer=null, playing=true, selQual='Auto', videoFitMode='contain';
+let toastTimer=null;
+let _lastRenderedIds=[];
+
+/* ════════════════════════════════════════
+   REAL-TIME STATUS ENGINE
+   প্রতিটি ম্যাচের startISO + durationMin দিয়ে
+   ডিভাইসের আসল ঘড়ির সাথে তুলনা করে স্বয়ংক্রিয়ভাবে
+   live / upcoming / recent নির্ধারণ করে — কোনো
+   হার্ডকোড করা status নেই, তাই সময় হলে নিজে নিজেই বদলে যায়।
+════════════════════════════════════════ */
+function statusOf(m){
+  const now=Date.now();
+  const start=new Date(m.startISO).getTime();
+  const end=start+((m.durationMin||130)*60000);
+  if(now<start)return"upcoming";
+  if(now>=start&&now<end)return"live";
+  return"recent";
+}
+function fmtCountdown(ms){
+  if(ms<=0)return"Starting now";
+  const s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),mn=Math.floor((s%3600)/60),sec=s%60;
+  if(d>0)return`${d}d ${h}h`;
+  if(h>0)return`${h}h ${mn}m`;
+  if(mn>0)return`${mn}m ${sec}s`;
+  return`${sec}s`;
+}
+function fmtElapsed(ms){
+  const s=Math.floor(ms/1000),h=Math.floor(s/3600),mn=Math.floor((s%3600)/60),sec=s%60;
+  if(h>0)return`${h}h ${mn}m`;
+  if(mn>0)return`${mn}m ${sec}s`;
+  return`${sec}s`;
+}
+function localKickoff(m){
+  const d=new Date(m.startISO);
+  return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+}
+function localDate(m){
+  const d=new Date(m.startISO);
+  return d.toLocaleDateString([],{day:"2-digit",month:"short",year:"numeric"});
+}
+function midContent(m,status){
+  if(status==="live"){
+    const elapsed=Date.now()-new Date(m.startISO).getTime();
+    return`<div class="live-row"><div class="l-dot"></div><span class="l-txt">LIVE</span></div><div style="color:#e2e8f0;font-size:11px;font-family:monospace">${fmtElapsed(elapsed)}</div><div class="m-over">elapsed</div>`;
+  }
+  if(status==="recent"){
+    {
+      const ef=effectiveFinal(m);
+      return`<div style="color:var(--sub);font-size:10px;font-weight:600;margin-bottom:3px">ENDED</div><div class="ended-score">${ef?ef.a+" – "+ef.b:"FT"}</div>`;
+    }
+  }
+  return`<div class="m-time">${localKickoff(m)}</div><div class="m-date">${localDate(m)}</div>`;
+}
+function footContent(m,status){
+  if(status==="upcoming"){
+    const left=new Date(m.startISO).getTime()-Date.now();
+    return`⏱ Starts in ${fmtCountdown(left)}`;
+  }
+  if(status==="live"){
+    return`🔴 Live now${m.venue?" · "+m.venue:""}`;
+  }
+  if(m.venue)return`📍 ${m.venue}`;
+  return"";
+}
+
+/* ════ INIT ════ */
+function init(){
+  applySettings();
+  renderTicker();
+  renderCats();
+  renderPills();
+  renderMatches();
+  renderTvGrid();
+  renderNotifBadge();
+  startRealtimeClock();
+  // API থেকে ম্যাচ লোড করো (first load)
+  loadApiMatches(true);
+  // প্রতি 5 মিনিটে auto-refresh
+  setInterval(() => loadApiMatches(false), API_REFRESH_MS);
+}
+
+function applySettings(){
+  document.querySelector('.banner').style.display = SETTINGS.banner?'flex':'none';
+  document.querySelector('.ticker').style.display = SETTINGS.ticker?'block':'none';
+}
+
+/* ════ TICKER ════ */
+function renderTicker(){
+  if(!SETTINGS.ticker) return;
+  const items=MATCHES.filter(m=>statusOf(m)==="live").map(m=>
+    `<span class="ticker-item"><span style="color:var(--red)">●</span> LIVE: <b>${m.A.n}</b> vs <b>${m.B.n}</b></span>`
+  ).concat(MATCHES.filter(m=>statusOf(m)==="upcoming").slice(0,4).map(m=>
+    `<span class="ticker-item">🕐 ${m.A.n} vs ${m.B.n} · ${localKickoff(m)}</span>`
+  ));
+  document.getElementById("tickerInner").innerHTML=items.join("")+items.join("");
+}
+
+/* ════ CATS ════ */
+function renderCats(){
+  document.getElementById("sportTabs").innerHTML=CATS.map(c=>`
+    <div class="s-tab ${activeSport===c.id?"on":""}" onclick="selSport('${c.id}')">
+      <span class="ico">${c.ico}</span><span class="lbl">${c.lbl}</span>
+      <span class="cnt">${c.id==="all"?MATCHES.length:MATCHES.filter(m=>m.sport===c.id).length}</span>
+    </div>`).join("");
+}
+function selSport(id){activeSport=id;renderCats();renderMatches();}
+
+/* ════ PILLS ════ */
+function renderPills(){
+  const cnt={all:MATCHES.length,live:MATCHES.filter(m=>statusOf(m)==="live").length,
+             recent:MATCHES.filter(m=>statusOf(m)==="recent").length,upcoming:MATCHES.filter(m=>statusOf(m)==="upcoming").length};
+  const lbl={all:"All",live:"🔴 Live",recent:"Recent",upcoming:"Upcoming"};
+  document.getElementById("pills").innerHTML=Object.keys(cnt).map(f=>`
+    <div class="pill ${activeFilter===f?"on":""}" onclick="selFilter('${f}')">${lbl[f]} (${cnt[f]})</div>`).join("");
+}
+function selFilter(f){activeFilter=f;renderPills();renderMatches();}
+
+/* ════ MATCHES ════ */
+function renderMatches(){
+  const q=searchQ.toLowerCase();
+  const list=MATCHES.filter(m=>{
+    const sp=activeSport==="all"||m.sport===activeSport;
+    const fi=activeFilter==="all"||statusOf(m)===activeFilter;
+    const se=!q||m.A.n.toLowerCase().includes(q)||m.B.n.toLowerCase().includes(q)||m.league.toLowerCase().includes(q);
+    return sp&&fi&&se;
+  });
+  const el=document.getElementById("matchList");
+  _lastRenderedIds=list.map(m=>m.id);
+  if(!list.length){el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:55px 0"><div style="font-size:44px;margin-bottom:12px">🔍</div><div style="font-size:14px">No matches found</div></div>`;return;}
+  const groups=[
+    {label:"🔴 LIVE NOW",items:list.filter(m=>statusOf(m)==="live")},
+    {label:"⏰ UPCOMING",items:list.filter(m=>statusOf(m)==="upcoming").sort((a,b)=>new Date(a.startISO)-new Date(b.startISO))},
+    {label:"📋 RECENT RESULTS",items:list.filter(m=>statusOf(m)==="recent").sort((a,b)=>new Date(b.startISO)-new Date(a.startISO))},
+  ].filter(g=>g.items.length);
+  el.innerHTML=groups.map(g=>`<div class="sec-lbl">${g.label}</div>${g.items.map(m=>matchCardHTML(m)).join("")}`).join("");
+}
+
+function matchCardHTML(m){
+  const status=statusOf(m);
+  const live=status==="live",rec=status==="recent";
+  const isFav=favorites.map(String).includes(String(m.id));
+  const showHot=SETTINGS.hotbadge&&m.hot;
+  const mid=midContent(m,status);
+  const foot=footContent(m,status);
+  const ef=rec?effectiveFinal(m):null;
+  const scoreA=ef?ef.a:"";
+  const scoreB=ef?ef.b:"";
+  return `<div class="m-card ${live?"live":""} ${showHot?"hot-card":""}" onclick="openChPicker('${m.id}')">
+    <div class="m-league"><span>${m.li}</span><span class="m-league-name">${m.league}</span>${showHot?'<span class="hot-b">🔥 HOT</span>':""}<span onclick="toggleFavById('${m.id}',event)" style="font-size:15px;cursor:pointer;padding:2px 4px;" title="Toggle favorite">${isFav?"💛":"⭐"}</span></div>
+    <div class="m-body">
+      <div class="teams">
+        <div class="team-a"><span class="flag">${m.A.f}</span><div><div class="t-name">${m.A.n}</div>${scoreA?`<div class="t-score">${scoreA}</div>`:""}</div></div>
+        <div class="m-mid" id="mid_${m.id}">${mid}</div>
+        <div class="team-b"><span class="flag">${m.B.f}</span><div><div class="t-name">${m.B.n}</div>${scoreB?`<div class="t-score">${scoreB}</div>`:""}</div></div>
+      </div>
+      ${foot?`<div class="m-footer" id="foot_${m.id}">${foot}</div>`:""}
+    </div>
+    <div class="watch-bar">▶ Tap to Watch Live &nbsp;•&nbsp; ${CHANNELS.length} Channels</div>
+  </div>`;
+}
+
+/* ════ REAL-TIME CLOCK ════
+   প্রতি সেকেন্ডে countdown/elapsed টেক্সট আপডেট হয়,
+   প্রতি ১৫ সেকেন্ডে পুরো লিস্ট রিফ্রেশ হয় (যাতে
+   upcoming→live→recent transition স্বয়ংক্রিয়ভাবে গ্রুপ বদলায়)। */
+function startRealtimeClock(){
+  setInterval(()=>{
+    _lastRenderedIds.forEach(id=>{
+      const m=MATCHES.find(x=>x.id===id);
+      if(!m)return;
+      const status=statusOf(m);
+      const midEl=document.getElementById(`mid_${id}`);
+      const footEl=document.getElementById(`foot_${id}`);
+      if(midEl)midEl.innerHTML=midContent(m,status);
+      if(footEl)footEl.innerHTML=footContent(m,status);
+    });
+    const lt=document.getElementById("liveTime");
+    if(lt)lt.textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  },1000);
+  setInterval(()=>{
+    renderMatches();renderPills();renderCats();renderTicker();renderNotifBadge();
+  },15000);
+}
+
+/* ════ TV GRID ════ */
+function renderTvGrid(){
+  const el=document.getElementById("tvGrid");
+  if(!CHANNELS.length){
+    el.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:50px 20px"><div style="font-size:40px;margin-bottom:10px">📺</div><div style="font-size:13px">এখনো কোনো চ্যানেল যোগ করা হয়নি</div><div style="font-size:11px;margin-top:4px">Admin Panel থেকে চ্যানেল যোগ করুন</div></div>`;
+    return;
+  }
+  el.innerHTML=CHANNELS.map(ch=>`
+    <div class="tv-card" onclick="playFromTV('${ch.id}')">
+      <div class="tv-card-ico" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">${chLogoHTML(ch)}</div>
+      <div class="tv-card-name">${ch.name}</div>
+      <div class="tv-card-q">${ch.quality} · ${ch.type.toUpperCase()}</div>
+      <div class="tv-live-b"><div class="l-dot" style="width:6px;height:6px"></div> LIVE</div>
+    </div>`).join("");
+}
+
+/* ════ SEARCH ════ */
+function toggleSearch(){const w=document.getElementById("searchWrap"),i=document.getElementById("searchInp");if(w.style.display==="none"){w.style.display="block";i.focus();}else{w.style.display="none";searchQ="";i.value="";renderMatches();}}
+function onSearch(){searchQ=document.getElementById("searchInp").value;renderMatches();}
+
+/* ════ CHANNEL PICKER ════ */
+function openChPicker(matchId){
+  currentMatch=MATCHES.find(m=>String(m.id)===String(matchId));
+  if(!currentMatch){showToast("⚠️ ম্যাচ খুঁজে পাওয়া যায়নি");return;}
+  document.getElementById("popTitle").textContent=`${currentMatch.A.n} vs ${currentMatch.B.n}`;
+  document.getElementById("popSub").textContent=`${CHANNELS.length} channels available`;
+  buildPopList();
+  openOverlay("chPopup");
+}
+function openChPopupFromPlayer(){if(!currentMatch){showToast("No match selected");return;}buildPopList();openOverlay("chPopup");}
+function buildPopList(){
+  const el=document.getElementById("popList");
+  if(!CHANNELS.length){
+    el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:30px 10px"><div style="font-size:36px;margin-bottom:8px">📺</div><div style="font-size:13px">কোনো চ্যানেল যোগ করা নেই</div><div style="font-size:11px;margin-top:4px">Admin Panel → Add New Channel থেকে যোগ করুন</div></div>`;
+    return;
+  }
+  el.innerHTML=CHANNELS.map(ch=>`
+    <div class="ch-item" onclick="startPlay('${ch.id}')">
+      <div class="ch-ico">${chLogoHTML(ch)}</div>
+      <div><div class="ch-name">${ch.name}</div><div class="ch-qual">${ch.quality} · ${ch.type.toUpperCase()}</div></div>
+      <div class="ch-live-b"><div class="l-dot" style="width:6px;height:6px"></div> LIVE</div>
+    </div>`).join("");
+}
+
+/* ════ PLAY ════ */
+function startPlay(chId,matchId,fromRestore){
+  if(matchId)currentMatch=MATCHES.find(m=>m.id===matchId);
+  currentCh=CHANNELS.find(c=>c.id===chId);
+  if(!currentCh||!currentMatch)return;
+  closeOverlay("chPopup");
+  ["homeScreen","favScreen","tvScreen"].forEach(s=>document.getElementById(s).classList.remove("active"));
+  document.getElementById("homeNav").style.display="none";
+  document.getElementById("playerScreen").classList.add("active");
+  if(!fromRestore){try{history.pushState({screen:"player"},"");}catch(e){}}
+  saveSession();
+  document.getElementById("pChName").textContent=currentCh.name;
+  document.getElementById("pChSub").textContent=`${currentMatch.A.n} vs ${currentMatch.B.n}`;
+  document.getElementById("pMatchT").textContent=`${currentMatch.A.f} ${currentMatch.A.n}  ·  ${currentMatch.B.n} ${currentMatch.B.f}`;
+  {
+    const _st=statusOf(currentMatch);
+    const _ef=_st==="recent"?effectiveFinal(currentMatch):null;
+    document.getElementById("pMatchSc").textContent=_ef?`${_ef.a} – ${_ef.b}`:(_st==="live"?"🔴 LIVE":"");
+  }
+  document.getElementById("pMatchLg").textContent=`${currentMatch.li} ${currentMatch.league}`;
+  document.getElementById("qualBtnLabel").textContent=currentCh.quality;
+  buildStats();
+  buildChStrip(chId);
+  buildPlayerEvents();
+  updateFavIcon();
+  loadStream(currentCh);
+}
+
+function playFromTV(chId){if(!currentMatch)currentMatch=MATCHES[0];startPlay(chId);}
+
+function buildStats(){
+  const m=currentMatch;
+  const status=statusOf(m);
+  let s;
+  if(status==="live"){
+    const elapsed=Date.now()-new Date(m.startISO).getTime();
+    s=[{v:"🔴 LIVE",l:m.A.n+" vs "+m.B.n},{v:fmtElapsed(elapsed),l:"Time Elapsed"},{v:m.venue||"—",l:"Venue"}];
+  }else if(status==="upcoming"){
+    const left=new Date(m.startISO).getTime()-Date.now();
+    s=[{v:localKickoff(m),l:"Kickoff Time"},{v:localDate(m),l:"Date"},{v:fmtCountdown(left),l:"Starts In"}];
+  }else{
+    const ef4=effectiveFinal(m);
+    s=[{v:ef4?ef4.a:"—",l:m.A.n},{v:"FT",l:"Full Time"},{v:ef4?ef4.b:"—",l:m.B.n}];
+  }
+  document.getElementById("pStatsRow").innerHTML=s.map(x=>`<div class="p-stat"><div class="p-stat-v">${x.v}</div><div class="p-stat-l">${x.l}</div></div>`).join("");
+}
+
+/* HORIZONTAL CHANNEL STRIP */
+function buildChStrip(activeId){
+  document.getElementById("chStrip").innerHTML=CHANNELS.map(ch=>`
+    <div class="ch-chip ${ch.id===activeId?"on":""}" onclick="switchCh('${ch.id}')">
+      <div class="ch-chip-ico">${chLogoHTML(ch)}</div>
+      <div class="ch-chip-name">${ch.name}</div>
+      ${ch.id===activeId?'<div class="ch-chip-dot"></div>':''}
+    </div>`).join("");
+}
+
+/* PLAYER LIVE EVENTS */
+function buildPlayerEvents(){
+  const el=document.getElementById("playerEventList");
+  const lives=MATCHES.filter(m=>statusOf(m)==="live");
+  const upcoming=MATCHES.filter(m=>statusOf(m)==="upcoming").sort((a,b)=>new Date(a.startISO)-new Date(b.startISO)).slice(0,4);
+  const all=[...lives,...upcoming];
+  if(!all.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px">No events right now</div>';return;}
+  el.innerHTML=all.map(m=>`
+    <div class="p-event-card" onclick="openChPicker('${m.id}')">
+      <div class="p-event-flags">${m.A.f}${m.B.f}</div>
+      <div class="p-event-info">
+        <div class="p-event-teams">${m.A.n} vs ${m.B.n}</div>
+        <div class="p-event-league">${m.li} ${m.league}</div>
+      </div>
+      <div class="p-event-badge">
+        ${statusOf(m)==="live"?'<div class="p-event-live"><div class="l-dot" style="width:6px;height:6px"></div>LIVE</div>':`<div class="p-event-time">${localKickoff(m)}</div>`}
+      </div>
+    </div>`).join("");
+}
+
+function switchCh(id){
+  currentCh=CHANNELS.find(c=>c.id===id);
+  if(!currentCh)return;
+  document.getElementById("pChName").textContent=currentCh.name;
+  document.getElementById("qualBtnLabel").textContent=currentCh.quality;
+  buildChStrip(id);
+  saveSession();
+  loadStream(currentCh);
+  document.querySelector(".p-panel").scrollTop=0;
+  showToast(`Switched to ${currentCh.name}`);
+}
+
+/* ════ HLS LOADER ════ */
+function loadStream(ch){
+  const vid=document.getElementById("mainVideo"),loader=document.getElementById("vLoader"),errEl=document.getElementById("vErr"),scan=document.getElementById("scanLine");
+  errEl.classList.remove("show");loader.style.display="flex";
+  hideControls();
+  document.getElementById("vLoadCh").textContent=ch.name+" · "+ch.quality;
+  scan.style.display="block";
+  if(hls){hls.destroy();hls=null;}
+  vid.removeAttribute("src");
+  // নতুন চ্যানেলে fit mode রিসেট — ডিফল্ট FIT, তারপর auto-detect refine করবে
+  _fitModeManualOverride=false;
+  applyFitMode("contain");
+  vid.onloadedmetadata=null; // পুরনো listener সরিয়ে নতুন বসাই (নিচে দুই HLS path-এই attach হবে)
+  vid.addEventListener("loadedmetadata", autoDetectFitMode, {once:true});
+  if(ch.type==="hls"&&Hls.isSupported()){
+    hls=new Hls({
+      enableWorker:true, lowLatencyMode:true,
+      backBufferLength:60, maxBufferLength:30,
+      xhrSetup: function(xhr){ xhr.timeout=12000; }
+    });
+    hls.loadSource(ch.url);
+    hls.attachMedia(vid);
+    hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+      vid.play().then(onStreamReady).catch(()=>onStreamReady());
+    });
+    hls.on(Hls.Events.ERROR,(_,d)=>{
+      if(d.fatal){
+        if(d.type===Hls.ErrorTypes.NETWORK_ERROR){
+          handleErr("⚠️ এই চ্যানেলটি এখন অনুপলব্ধ বা geo-restricted।\nঅন্য চ্যানেল ট্রাই করুন।");
+        } else {
+          handleErr("⚠️ Stream লোড হয়নি।\nঅন্য চ্যানেল সিলেক্ট করুন।");
+        }
+      }
+    });
+    // 12s timeout
+    let _t=setTimeout(()=>{
+      if(loader.style.display!=="none")
+        handleErr("⏱ চ্যানেলটি সংযোগ করতে সময় বেশি লাগছে।\nঅন্য চ্যানেল ট্রাই করুন।");
+    },12000);
+    hls.on(Hls.Events.MANIFEST_PARSED,()=>clearTimeout(_t));
+  }else if(vid.canPlayType("application/vnd.apple.mpegurl")&&ch.type==="hls"){
+    vid.src=ch.url;
+    vid.onloadedmetadata=()=>vid.play().then(onStreamReady).catch(()=>onStreamReady());
+    vid.onerror=()=>handleErr("⚠️ এই চ্যানেলটি চালানো যাচ্ছে না।\nঅন্য চ্যানেল ট্রাই করুন।");
+    setTimeout(()=>{if(loader.style.display!=="none")handleErr("⏱ Connection timeout।");},12000);
+  }else if(ch.type==="dash"){
+    handleErr("⚠️ এই DASH/DRM চ্যানেলটি browser-এ সরাসরি চলে না।\nAdmin Panel থেকে HLS চ্যানেল যোগ করুন।");
+  }else{
+    handleErr("⚠️ এই format browser-এ support করে না।");
+  }
+}
+function onStreamReady(){
+  document.getElementById("vLoader").style.display="none";
+  document.getElementById("scanLine").style.display="none";
+  document.getElementById("cPlay").textContent="⏸";
+  document.getElementById("ppBtn").textContent="⏸";
+  playing=true;
+  showControls(); // শুরুতে briefly দেখাবে, ৪ সেকেন্ড পর নিজেই hide হবে
+}
+function handleErr(msg){
+  document.getElementById("vLoader").style.display="none";
+  document.getElementById("scanLine").style.display="none";
+  hideControls();
+  document.getElementById("vErrMsg").textContent=typeof msg==="string"?msg:"Stream unavailable. Try another channel.";
+  document.getElementById("vErr").classList.add("show");
+}
+function retryStream(){if(currentCh)loadStream(currentCh);}
+
+function tryNextChannel(){
+  if(!currentCh||!CHANNELS.length)return;
+  const idx=CHANNELS.findIndex(c=>c.id===currentCh.id);
+  const next=CHANNELS[(idx+1)%CHANNELS.length];
+  switchCh(next.id);
+}
+
+/* ════ VIDEO CONTROLS ════ */
+/* কন্ট্রোল bar + topbar + center play button — সব একসাথে show/hide হয়, auto-hide হয় ৪ সেকেন্ড পর (চলা অবস্থায়) */
+function showControls(){
+  document.getElementById("ctrlOv").classList.add("vis");
+  document.getElementById("pTopbar").classList.add("vis");
+  document.getElementById("cPlay").classList.add("vis");
+  resetCtrlTimer();
+}
+function hideControls(){
+  document.getElementById("ctrlOv").classList.remove("vis");
+  document.getElementById("pTopbar").classList.remove("vis");
+  document.getElementById("cPlay").classList.remove("vis");
+}
+function tapVideo(){
+  const ov=document.getElementById("ctrlOv");
+  if(ov.classList.contains("vis")) hideControls();
+  else showControls();
+}
+function resetCtrlTimer(){
+  clearTimeout(ctrlTimer);
+  if(playing) ctrlTimer=setTimeout(hideControls,4000);
+}
+function togglePlay(e){
+  if(e)e.stopPropagation();
+  const vid=document.getElementById("mainVideo");
+  if(vid.paused){vid.play();playing=true;}else{vid.pause();playing=false;}
+  const ico=playing?"⏸":"▶";
+  document.getElementById("ppBtn").textContent=ico;
+  document.getElementById("cPlay").textContent=ico;
+  if(!playing){clearTimeout(ctrlTimer);showControls();}else resetCtrlTimer();
+}
+// তিনটা মোড: FIT (contain, কখনো crop হবে না) → FILL (cover, aspect ধরে crop) → CROP (zoom করে crop, black bar সম্পূর্ণ সরায়)
+const FIT_MODES = ["contain","cover","crop"];
+const FIT_LABELS = {contain:"FIT", cover:"FILL", crop:"CROP"};
+function applyFitMode(mode){
+  const vid=document.getElementById("mainVideo");
+  videoFitMode=mode;
+  if(mode==="crop"){
+    vid.style.objectFit="cover";
+    vid.style.transform="scale(1.18)"; // embedded letterbox bar সরানোর জন্য extra zoom
+  } else {
+    vid.style.objectFit=mode;
+    vid.style.transform="scale(1)";
+  }
+  const btn=document.getElementById("fitModeBtn");
+  if(btn) btn.textContent=FIT_LABELS[mode];
+}
+function toggleFitMode(e){
+  if(e)e.stopPropagation();
+  _fitModeManualOverride=true; // user নিজে বেছেছে — auto-detect আর জোর করে বদলাবে না এই সেশনে
+  const idx=FIT_MODES.indexOf(videoFitMode);
+  const next=FIT_MODES[(idx+1)%FIT_MODES.length];
+  applyFitMode(next);
+  const msgs={
+    contain:"📐 FIT — সম্পূর্ণ ভিডিও দেখা যাবে, কোনো crop হবে না",
+    cover:"📐 FILL — স্ক্রিন ভরাবে, edges সামান্য crop হতে পারে",
+    crop:"📐 CROP — zoom করে black bar সরানো হলো, বেশি crop হতে পারে",
+  };
+  showToast(msgs[next]);
+}
+
+// অটো-ডিটেকশন: ভিডিওর আসল aspect ratio আর প্লেয়ার বক্সের aspect ratio তুলনা করে
+// সবচেয়ে নিরাপদ মোড বেছে নেয় (যদি user নিজে session-এ override না করে থাকে)
+let _fitModeManualOverride=false;
+function autoDetectFitMode(){
+  if(_fitModeManualOverride) return; // user-এর পছন্দ respect করো
+  const vid=document.getElementById("mainVideo");
+  const zone=document.getElementById("vidZone");
+  if(!vid.videoWidth || !vid.videoHeight || !zone) return;
+  const videoRatio = vid.videoWidth / vid.videoHeight;
+  const boxRatio = zone.clientWidth / zone.clientHeight;
+  const diff = Math.abs(videoRatio - boxRatio) / boxRatio;
+  // aspect ratio প্রায় কাছাকাছি (৫% এর কম পার্থক্য) হলে FILL নিরাপদ (crop নগণ্য)
+  // বেশি পার্থক্য হলে FIT-ই নিরাপদ, যাতে scoreboard/UI কাটা না পড়ে
+  if(diff < 0.05) applyFitMode("cover");
+  else applyFitMode("contain");
+}
+function doSkip(sec,e){if(e)e.stopPropagation();document.getElementById("mainVideo").currentTime+=sec;showToast(sec>0?`+${sec}s`:`${sec}s`);}
+function toggleFS(e){
+  if(e)e.stopPropagation();
+  const z=document.getElementById("vidZone");
+  if(!document.fullscreenElement){
+    const req=z.requestFullscreen||z.webkitRequestFullscreen||z.mozRequestFullScreen||z.msRequestFullscreen;
+    const p=req.call(z);
+    const lockLandscape=()=>{
+      if(screen.orientation && screen.orientation.lock){
+        screen.orientation.lock("landscape").catch(()=>{}); // অসমর্থিত ডিভাইসে silently ignore
+      }
+    };
+    if(p && p.then) p.then(lockLandscape).catch(()=>{});
+    else lockLandscape(); // কিছু ব্রাউজার promise রিটার্ন করে না, সাথে সাথে try করো
+  } else {
+    if(screen.orientation && screen.orientation.unlock){ try{screen.orientation.unlock();}catch(err){} }
+    (document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen).call(document);
+  }
+}
+// সিস্টেম ব্যাক/gesture দিয়ে fullscreen বের হলেও orientation unlock হয়
+document.addEventListener("fullscreenchange", ()=>{
+  if(!document.fullscreenElement && screen.orientation && screen.orientation.unlock){
+    try{screen.orientation.unlock();}catch(e){}
+  }
+});
+const QUALITIES=["Auto","1080p","720p","480p","360p"];
+function openQualPop(e){if(e)e.stopPropagation();document.getElementById("qualList").innerHTML=QUALITIES.map(q=>`<div class="q-item ${q===selQual?"sel":""}" onclick="setQual('${q}')">${q} <span class="q-check">${q===selQual?"✓":""}</span></div>`).join("");openOverlay("qualPopup");}
+function setQual(q){selQual=q;document.getElementById("qualBtnLabel").textContent=q;closeOverlay("qualPopup");showToast("Quality: "+q);}
+
+/* ════ NAVIGATION ════ */
+function navTo(id){
+  activeNav=id;
+  ["homeScreen","favScreen","tvScreen"].forEach(s=>document.getElementById(s).classList.remove("active"));
+  const map={home:"homeScreen",live:"homeScreen",fav:"favScreen",tv:"tvScreen"};
+  document.getElementById(map[id]||"homeScreen").classList.add("active");
+  if(id==="live"){activeFilter="live";renderPills();renderMatches();}
+  ["nb-home","nb-live","nb-fav","nb-tv"].forEach(b=>{const el=document.getElementById(b);if(el)el.classList.remove("on");});
+  const nb=document.getElementById("nb-"+id);if(nb)nb.classList.add("on");
+  if(id==="fav")renderFavList();
+}
+
+function goHome(){
+  const vid=document.getElementById("mainVideo");
+  vid.pause();if(hls){hls.destroy();hls=null;}vid.removeAttribute("src");
+  clearSession();
+  try{history.replaceState({screen:"home"},"");}catch(e){}
+  document.getElementById("playerScreen").classList.remove("active");
+  document.getElementById("adminScreen").classList.remove("active");
+  document.getElementById("adminLoginScreen").classList.remove("active");
+  document.getElementById("homeNav").style.display="flex";
+  document.getElementById("homeScreen").classList.add("active");
+  activeFilter="all";renderPills();renderMatches();
+}
+
+window.addEventListener("popstate",function(){
+  if(document.getElementById("playerScreen").classList.contains("active")){
+    goHome();try{history.pushState({screen:"home"},"");}catch(e){}
+  }else{try{history.pushState({screen:"home"},"");}catch(e){}}
+});
+try{history.replaceState({screen:"home"},"");}catch(e){}
+
+/* ════ FAVORITES ════ */
+function toggleFav(){
+  if(!currentMatch)return;
+  toggleFavById(currentMatch.id);
+}
+function toggleFavById(id, e){
+  if(e) e.stopPropagation(); // card click (channel picker) trigger না হোক
+  id = String(id);
+  const idx = favorites.map(String).indexOf(id);
+  if(idx>-1) favorites.splice(idx,1); else favorites.push(id);
+  lsSet(LS.FAVS,favorites);
+  if(currentMatch && String(currentMatch.id)===id) updateFavIcon();
+  renderMatches();
+  renderNotifBadge();
+  if(activeNav==="fav") renderFavList();
+  showToast(favorites.map(String).includes(id)?"💛 Favorites-এ যুক্ত হলো":"⭐ Favorites থেকে বাদ দেওয়া হলো");
+}
+function updateFavIcon(){if(!currentMatch)return;document.getElementById("favIcon").textContent=favorites.map(String).includes(String(currentMatch.id))?"💛":"⭐";}
+function renderFavList(){
+  const list=MATCHES.filter(m=>favorites.map(String).includes(String(m.id)));
+  const el=document.getElementById("favList");
+  if(!list.length){el.innerHTML=`<div class="fav-empty"><div class="e-ico">⭐</div><p style="font-size:14px">No favorites yet.<br>Tap ⭐ in the player to save matches here.</p></div>`;return;}
+  el.innerHTML=`<div class="sec-lbl" style="padding:12px 14px 6px">YOUR FAVORITES</div>`+list.map(m=>matchCardHTML(m)).join("");
+}
+
+/* ════ SESSION (refresh persistence) ════ */
+function saveSession(){if(!currentMatch||!currentCh)return;lsSet(LS.SESSION,{matchId:currentMatch.id,chId:currentCh.id,screen:"player"});}
+function clearSession(){try{localStorage.removeItem(LS.SESSION);}catch(e){}}
+function restoreSession(){
+  const s=lsGet(LS.SESSION,null);
+  if(!s||s.screen!=="player")return;
+  const match=MATCHES.find(m=>m.id===s.matchId),ch=CHANNELS.find(c=>c.id===s.chId);
+  if(match&&ch){currentMatch=match;startPlay(ch.id,match.id,true);}
+}
+
+/* ════ OVERLAY ════ */
+function openOverlay(id){document.getElementById(id).classList.add("open");}
+function closeOverlay(id){document.getElementById(id).classList.remove("open");}
+function outsideClose(e,id){if(e.target===document.getElementById(id))closeOverlay(id);}
+
+/* ════ TOAST ════ */
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2200);}
+
+/* ════ LOGO TRIPLE-CLICK → ADMIN PANEL ════
+   উপরের বাম পাশের লোগো+নামে ৩ বার পরপর ক্লিক করলে
+   গোপন Admin Login স্ক্রিন খুলবে। সাধারণ ১-২ ক্লিকে কিছু হবে না। */
+let _logoClicks=0, _logoClickTimer=null;
+function onLogoTripleClick(){
+  _logoClicks++;
+  clearTimeout(_logoClickTimer);
+  if(_logoClicks>=3){
+    _logoClicks=0;
+    openAdminLogin();
+    return;
+  }
+  _logoClickTimer=setTimeout(()=>{ _logoClicks=0; }, 600);
+}
+
+/* ════ NOTIFICATIONS ════
+   Favorite করা ম্যাচ live হলে বা শীঘ্রই শুরু হলে notification তৈরি হয়,
+   এবং এখন চলমান অন্য live ম্যাচও দেখায়। */
+function generateNotifications(){
+  const notifs=[];
+  const favIds=favorites.map(String);
+  MATCHES.forEach(m=>{
+    const st=statusOf(m);
+    const isFav=favIds.includes(String(m.id));
+    if(st==="live" && isFav){
+      notifs.push({icon:"🔴",text:`${m.A.n} vs ${m.B.n} এখন LIVE!`,m});
+    } else if(st==="upcoming" && isFav){
+      const left=new Date(m.startISO).getTime()-Date.now();
+      if(left < 3*3600000){
+        notifs.push({icon:"⏰",text:`${m.A.n} vs ${m.B.n} শুরু হবে ${fmtCountdown(left)} পরে`,m});
+      }
+    }
+  });
+  // favorite না করা থাকলেও বর্তমানে live ম্যাচগুলো general notification হিসেবে (max 3)
+  MATCHES.filter(m=>statusOf(m)==="live" && !favIds.includes(String(m.id))).slice(0,3).forEach(m=>{
+    notifs.push({icon:"🔴",text:`LIVE এখন: ${m.A.n} vs ${m.B.n}`,m});
+  });
+  return notifs;
+}
+
+function renderNotifBadge(){
+  const notifs=generateNotifications();
+  const badge=document.getElementById("notifBadge");
+  if(!badge)return;
+  if(notifs.length>0){ badge.style.display="flex"; badge.textContent=notifs.length>9?"9+":notifs.length; }
+  else{ badge.style.display="none"; }
+}
+
+function openNotifications(){
+  const notifs=generateNotifications();
+  const el=document.getElementById("notifList");
+  if(!notifs.length){
+    el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:40px 0">
+      <div style="font-size:40px;margin-bottom:10px">🔔</div>
+      <div style="font-size:13px">এখন কোনো নতুন নোটিফিকেশন নেই</div>
+      <div style="font-size:11px;margin-top:6px">⭐ ম্যাচ favorite করলে live/upcoming আপডেট এখানে আসবে</div>
+    </div>`;
+  } else {
+    el.innerHTML=notifs.map(n=>`
+      <div class="ch-item" onclick="closeOverlay('notifPopup');openChPicker('${n.m.id}')">
+        <div class="ch-ico" style="font-size:20px">${n.icon}</div>
+        <div style="flex:1"><div class="ch-name">${n.text}</div><div class="ch-qual">${n.m.league}</div></div>
+      </div>`).join("");
+  }
+  openOverlay("notifPopup");
+}
+
+/* ══════════════════════════════════
+   ADMIN PANEL
+══════════════════════════════════ */
+function openAdminLogin(){
+  ["homeScreen","favScreen","tvScreen","playerScreen","adminScreen"].forEach(s=>document.getElementById(s).classList.remove("active"));
+  document.getElementById("homeNav").style.display="none";
+  document.getElementById("adminLoginScreen").classList.add("active");
+  document.getElementById("adminUser").value="";
+  document.getElementById("adminPass").value="";
+}
+
+function doAdminLogin(){
+  const user=document.getElementById("adminUser").value.trim();
+  const pass=document.getElementById("adminPass").value;
+  const savedPass=lsGet(LS.ADMIN_PASS,ADMIN_DEFAULT_PASS);
+  if(user===ADMIN_DEFAULT_USER&&pass===savedPass){
+    document.getElementById("adminLoginScreen").classList.remove("active");
+    document.getElementById("adminScreen").classList.add("active");
+    renderAdminPanel();
+    showToast("Welcome to Admin Panel ⚡");
+  }else{showToast("❌ Wrong username or password");}
+}
+
+function adminLogout(){
+  document.getElementById("adminScreen").classList.remove("active");
+  document.getElementById("homeNav").style.display="flex";
+  document.getElementById("homeScreen").classList.add("active");
+  showToast("Logged out of Admin Panel");
+}
+
+function renderAdminPanel(){
+  // Stats
+  document.getElementById("statCh").textContent=CHANNELS.length;
+  document.getElementById("statMatch").textContent=MATCHES.length;
+  document.getElementById("statLive").textContent=MATCHES.filter(m=>statusOf(m)==="live").length;
+  // Channel list
+  renderAdminChList();
+  // Score override dropdown
+  renderOverrideDropdown();
+  // Settings toggles
+  ["banner","ticker","hotbadge"].forEach(k=>{
+    const el=document.getElementById("tog-"+k);
+    if(el){el.classList.toggle("on",!!SETTINGS[k]);}
+  });
+}
+
+/* ════ SCORE OVERRIDE ADMIN UI ════ */
+function findMatchById(id){
+  return MATCHES.find(m=>String(m.id)===String(id));
+}
+
+function renderOverrideDropdown(){
+  const sel=document.getElementById('ovMatchSelect');
+  if(!sel)return;
+  const list=[...MATCHES].sort((a,b)=>new Date(b.startISO)-new Date(a.startISO));
+  if(!list.length){ sel.innerHTML='<option>কোনো ম্যাচ নেই</option>'; return; }
+  sel.innerHTML=list.map(m=>{
+    const ov=getOverride(m);
+    const dateStr=new Date(m.startISO).toLocaleDateString();
+    const tag=ov?` [Override: ${ov.a}-${ov.b}]`:(m.final?` [Auto: ${m.final.a}-${m.final.b}]`:'');
+    return `<option value="${String(m.id)}">${m.A.n} vs ${m.B.n} — ${dateStr}${tag}</option>`;
+  }).join('');
+  onOverrideMatchSelect();
+}
+
+function onOverrideMatchSelect(){
+  const sel=document.getElementById('ovMatchSelect');
+  if(!sel||!sel.value)return;
+  const m=findMatchById(sel.value);
+  if(!m)return;
+  const ov=getOverride(m);
+  document.getElementById('ovScoreA').value=ov?ov.a:(m.final?m.final.a:'');
+  document.getElementById('ovScoreB').value=ov?ov.b:(m.final?m.final.b:'');
+}
+
+function adminSetOverride(){
+  const sel=document.getElementById('ovMatchSelect');
+  const m=findMatchById(sel.value);
+  if(!m){showToast('❌ ম্যাচ পাওয়া যায়নি');return;}
+  const a=document.getElementById('ovScoreA').value.trim();
+  const b=document.getElementById('ovScoreB').value.trim();
+  if(!a||!b){showToast('❌ দুটো স্কোরই দিতে হবে');return;}
+  setOverride(m,a,b);
+  renderMatches();renderOverrideDropdown();
+  showToast(`✅ Score saved: ${m.A.n} ${a} - ${b} ${m.B.n}`);
+}
+
+function adminRemoveOverride(){
+  const sel=document.getElementById('ovMatchSelect');
+  const m=findMatchById(sel.value);
+  if(!m)return;
+  removeOverride(m);
+  renderMatches();renderOverrideDropdown();
+  showToast('🗑️ Override removed — auto score ফিরিয়ে আনা হলো');
+}
+
+function renderAdminChList(){
+  document.getElementById("adminChList").innerHTML=CHANNELS.map((ch,i)=>`
+    <div class="admin-ch-item">
+      <div class="admin-ch-ico">${chLogoHTML(ch)}</div>
+      <div class="admin-ch-info">
+        <div class="admin-ch-name">${ch.name} <span style="font-size:10px;color:var(--muted)">${ch.quality}</span></div>
+        <div class="admin-ch-url">${ch.url}</div>
+      </div>
+      <button class="admin-ch-del" onclick="adminDelChannel(${i})">✕</button>
+    </div>`).join("")||'<div style="color:var(--muted);font-size:13px;text-align:center;padding:14px">No channels added yet</div>';
+}
+
+// Logo file select হলে preview দেখানো
+document.addEventListener('change', function(e){
+  if(e.target && e.target.id==='newChLogoFile'){
+    const file=e.target.files[0];
+    if(!file)return;
+    if(file.size > 800*1024){ showToast('⚠️ ছবিটা বড় (800KB+) — ছোট ছবি ব্যবহার করুন'); }
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      document.getElementById('newChLogoPreviewImg').src=ev.target.result;
+      document.getElementById('newChLogoPreview').style.display='block';
+      e.target.dataset.base64=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+function adminAddChannel(){
+  const name=document.getElementById("newChName").value.trim();
+  const icon=document.getElementById("newChIcon").value.trim()||"📺";
+  const url=document.getElementById("newChUrl").value.trim();
+  const quality=document.getElementById("newChQual").value;
+  const type=document.getElementById("newChType").value;
+  const logoUrl=document.getElementById("newChLogoUrl").value.trim();
+  const logoFileInput=document.getElementById("newChLogoFile");
+  const logoBase64=logoFileInput?.dataset?.base64||'';
+  if(!name||!url){showToast("❌ Name and URL are required");return;}
+  if(!url.startsWith("http")){showToast("❌ URL must start with http");return;}
+  if(location.protocol==="https:" && url.startsWith("http://")){
+    showToast("⚠️ HTTP লিংক HTTPS সাইটে ব্লক হবে! https:// লিংক ব্যবহার করুন");
+    return;
+  }
+  const logo = logoBase64 || logoUrl || '';
+  const id="ch_"+Date.now();
+  CHANNELS.push({id,name,icon,url,quality,type,logo});
+  lsSet(LS.CHANNELS,CHANNELS);
+  renderAdminChList();
+  renderTvGrid();
+  buildChStrip(currentCh?.id||"");
+  document.getElementById("statCh").textContent=CHANNELS.length;
+  ["newChName","newChIcon","newChUrl","newChLogoUrl"].forEach(id=>document.getElementById(id).value="");
+  logoFileInput.value=''; delete logoFileInput.dataset.base64;
+  document.getElementById('newChLogoPreview').style.display='none';
+  showToast(`✅ Channel "${name}" added!${logo?' (logo set)':''}`);
+}
+
+function adminDelChannel(idx){
+  const name=CHANNELS[idx].name;
+  CHANNELS.splice(idx,1);
+  lsSet(LS.CHANNELS,CHANNELS);
+  renderAdminChList();
+  renderTvGrid();
+  document.getElementById("statCh").textContent=CHANNELS.length;
+  showToast(`🗑️ "${name}" removed`);
+}
+
+function adminAddMatch(){
+  const A=document.getElementById("newMA").value.trim();
+  const Af=document.getElementById("newMAf").value.trim()||"⚽";
+  const B=document.getElementById("newMB").value.trim();
+  const Bf=document.getElementById("newMBf").value.trim()||"⚽";
+  const lg=document.getElementById("newMLg").value.trim();
+  const li=document.getElementById("newMLi").value.trim()||"🏆";
+  const sport=document.getElementById("newMSport").value;
+  const venue=document.getElementById("newMVenue").value.trim();
+  const dtVal=document.getElementById("newMDateTime").value;
+  const durationMin=Number(document.getElementById("newMDur").value);
+  const finalA=document.getElementById("newMFinalA").value.trim();
+  const finalB=document.getElementById("newMFinalB").value.trim();
+  if(!A||!B||!lg){showToast("❌ Team names and league are required");return;}
+  if(!dtVal){showToast("❌ Match date & time is required");return;}
+  const startISO=new Date(dtVal).toISOString();
+  const id=Date.now();
+  const m={id,sport,league:lg,li,A:{n:A,f:Af},B:{n:B,f:Bf},startISO,durationMin,hot:false};
+  if(venue)m.venue=venue;
+  if(finalA&&finalB)m.final={a:finalA,b:finalB};
+  MATCHES.unshift(m); // manual ম্যাচ সবার উপরে
+  // শুধু manual (numeric id) ম্যাচগুলো localStorage-এ সেভ করো
+  const manualOnly = MATCHES.filter(x => typeof x.id === 'number' && x.id > 1000000);
+  lsSet(LS.MATCHES, manualOnly);
+  renderMatches();renderPills();renderCats();renderTicker();renderNotifBadge();
+  document.getElementById("statMatch").textContent=MATCHES.length;
+  document.getElementById("statLive").textContent=MATCHES.filter(m=>statusOf(m)==="live").length;
+  ["newMA","newMAf","newMB","newMBf","newMLg","newMLi","newMVenue","newMDateTime","newMFinalA","newMFinalB"].forEach(id=>document.getElementById(id).value="");
+  showToast(`✅ Match "${A} vs ${B}" added! Status will auto-update in real-time.`);
+}
+
+function toggleSetting(key){
+  SETTINGS[key]=!SETTINGS[key];
+  lsSet(LS.SETTINGS,SETTINGS);
+  const el=document.getElementById("tog-"+key);
+  if(el)el.classList.toggle("on",SETTINGS[key]);
+  applySettings();
+  renderTicker();
+  renderMatches();
+  showToast(`${key} ${SETTINGS[key]?"enabled":"disabled"}`);
+}
+
+function changeAdminPass(){
+  const cur=document.getElementById("curPass").value;
+  const nw=document.getElementById("newPass").value;
+  const con=document.getElementById("conPass").value;
+  const saved=lsGet(LS.ADMIN_PASS,ADMIN_DEFAULT_PASS);
+  if(cur!==saved){showToast("❌ Current password is wrong");return;}
+  if(nw.length<6){showToast("❌ New password must be 6+ characters");return;}
+  if(nw!==con){showToast("❌ Passwords do not match");return;}
+  lsSet(LS.ADMIN_PASS,nw);
+  ["curPass","newPass","conPass"].forEach(id=>document.getElementById(id).value="");
+  showToast("✅ Password updated successfully!");
+}
+
+function adminResetChannels(){
+  if(!confirm("⚠️ এটি আপনার সব ম্যানুয়ালি যোগ করা চ্যানেল মুছে দিবে এবং লিস্ট খালি করে দিবে (কোনো dummy চ্যানেল আর নেই)। আপনি কি নিশ্চিত?"))return;
+  CHANNELS=[...DEFAULT_CHANNELS]; // এখন DEFAULT_CHANNELS সবসময় খালি []
+  lsSet(LS.CHANNELS,CHANNELS);
+  renderAdminChList();renderTvGrid();
+  document.getElementById("statCh").textContent=CHANNELS.length;
+  showToast("✅ চ্যানেল লিস্ট খালি করা হলো — নতুন চ্যানেল উপরে থেকে যোগ করুন");
+}
+
+function adminForceRefresh(){
+  showToast("🔄 Fetching latest match data...");
+  loadApiMatches(true).then(()=>{
+    renderAdminPanel();
+    showToast("✅ Match data refreshed from API!");
+  }).catch(()=>showToast("⚠️ API refresh failed"));
+}
+
+function adminResetAll(){
+  if(!confirm("⚠️ This will delete ALL custom data. Are you sure?"))return;
+  Object.values(LS).forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  showToast("✅ Factory reset complete. Reloading…");
+  setTimeout(()=>location.reload(),1500);
+}
+
+/* ════ START ════ */
+init();
+restoreSession();
+
+/* Splash screen — animation শেষ হলে fade out করে home দেখায় */
+setTimeout(()=>{
+  const sp=document.getElementById('splashScreen');
+  if(sp){
+    sp.classList.add('hide');
+    setTimeout(()=>sp.remove(),550);
+  }
+},1700);
+</script>
+</body>
+</html>
